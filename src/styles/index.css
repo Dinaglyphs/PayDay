@@ -1,0 +1,381 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Global reset & transitions ───────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+  transition-property: background-color, border-color, color, box-shadow, transform, opacity;
+  transition-duration: 0.15s;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  color: var(--c-text-1);
+  background: var(--c-bg-page);
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ─── Light mode (default) ──────────────────────────────────────────────── */
+:root {
+  --c-bg-page:      #f8f9fa;
+  --c-bg-card:      #ffffff;
+  --c-bg-sidebar:   #ffffff;
+  --c-bg-row:       #fafafa;
+  --c-border:       #e5e7eb;
+  --c-border-light: #f3f4f6;
+  --c-text-1:       #111827;
+  --c-text-2:       #374151;
+  --c-text-3:       #6b7280;
+  --c-text-4:       #9ca3af;
+  --c-input-bg:     #fafafa;
+  --c-input-border: #d1d5db;
+  --c-sorted-dot:   #639922;
+  --c-sorted-bg:    #EAF3DE;
+  --c-sorted-text:  #27500A;
+  --c-pending-dot:  #EF9F27;
+  --c-pending-bg:   #FAEEDA;
+  --c-pending-text: #633806;
+  --c-skipped-dot:  #E24B4A;
+  --c-skipped-bg:   #FCEBEB;
+  --c-skipped-text: #791F1F;
+  --c-untouched-dot:  #9ca3af;
+  --c-untouched-bg:   #f3f4f6;
+  --c-untouched-text: #6b7280;
+  --glass-card-bg:     #ffffff;
+  --glass-card-border: #e5e7eb;
+}
+
+/* ─── Dark / Glassmorphism mode ─────────────────────────────────────────── */
+html.dark {
+  --c-bg-page:      #0D0010;
+  --c-bg-card:      rgba(255, 255, 255, 0.04);
+  --c-bg-sidebar:   rgba(26, 0, 35, 0.75);
+  --c-bg-row:       rgba(255, 255, 255, 0.025);
+  --c-border:       rgba(204, 51, 153, 0.25);
+  --c-border-light: rgba(255, 255, 255, 0.07);
+  --c-text-1:       #F5F0FF;
+  --c-text-2:       rgba(230, 230, 230, 0.75);
+  --c-text-3:       rgba(230, 230, 230, 0.45);
+  --c-text-4:       rgba(204, 51, 153, 0.7);
+  --c-input-bg:     rgba(255, 255, 255, 0.06);
+  --c-input-border: rgba(255, 255, 255, 0.12);
+  --c-sorted-dot:   #93C95A;
+  --c-sorted-bg:    rgba(99, 153, 34, 0.15);
+  --c-sorted-text:  #93C95A;
+  --c-pending-dot:  #F5B942;
+  --c-pending-bg:   rgba(239, 159, 39, 0.15);
+  --c-pending-text: #F5B942;
+  --c-skipped-dot:  #F06B6A;
+  --c-skipped-bg:   rgba(226, 75, 74, 0.15);
+  --c-skipped-text: #F06B6A;
+  --c-untouched-dot:  rgba(255, 255, 255, 0.25);
+  --c-untouched-bg:   rgba(255, 255, 255, 0.05);
+  --c-untouched-text: rgba(230, 230, 230, 0.5);
+  --glass-card-bg:     rgba(255, 255, 255, 0.04);
+  --glass-card-border: rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Dark radial gradient background ──────────────────────────────────── */
+html.dark body {
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(153, 0, 153, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(66, 0, 80, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 10%, rgba(204, 51, 153, 0.08) 0%, transparent 40%),
+    #0D0010;
+  min-height: 100vh;
+}
+
+/* ─── Glass card ─────────────────────────────────────────────────────────── */
+.glass-card {
+  background: var(--glass-card-bg);
+  border: 1px solid var(--glass-card-border);
+  border-radius: 14px;
+}
+html.dark .glass-card {
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+}
+html:not(.dark) .glass-card {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* ─── Stat card shimmer ──────────────────────────────────────────────────── */
+.stat-card {
+  position: relative;
+  overflow: hidden;
+}
+html.dark .stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(204, 51, 153, 0.45), transparent);
+}
+
+/* ─── Buttons ────────────────────────────────────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, #990099, #CC3399);
+  border: none;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 18px;
+  box-shadow: 0 2px 12px rgba(153, 0, 153, 0.4), 0 1px 0 rgba(255, 255, 255, 0.1) inset;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #aa00aa, #dd44aa);
+  box-shadow: 0 4px 20px rgba(153, 0, 153, 0.5);
+  transform: translateY(-1px);
+}
+.btn-primary:active { transform: scale(0.98) translateY(0); }
+.btn-primary:disabled {
+  background: rgba(153, 0, 153, 0.25);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+html:not(.dark) .btn-primary:disabled {
+  background: #d1d5db;
+  color: #fff;
+  opacity: 1;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: rgba(230, 230, 230, 0.75);
+  font-size: 12px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+html:not(.dark) .btn-secondary {
+  background: #ffffff;
+  border-color: #d1d5db;
+  color: #374151;
+}
+html:not(.dark) .btn-secondary:hover {
+  background: #f3f4f6;
+}
+
+.btn-danger {
+  background: rgba(226, 75, 74, 0.1);
+  border: 1px solid rgba(226, 75, 74, 0.35);
+  border-radius: 8px;
+  color: #F06B6A;
+  font-size: 12px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-danger:hover {
+  background: rgba(226, 75, 74, 0.2);
+  border-color: rgba(226, 75, 74, 0.55);
+}
+html:not(.dark) .btn-danger {
+  background: none;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+html:not(.dark) .btn-danger:hover {
+  background: #fee2e2;
+}
+
+/* ─── Status dots with glow ─────────────────────────────────────────────── */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-dot.dot-sorted    { background: var(--c-sorted-dot); }
+.status-dot.dot-pending   { background: var(--c-pending-dot); }
+.status-dot.dot-skipped   { background: var(--c-skipped-dot); }
+.status-dot.dot-untouched { background: var(--c-untouched-dot); }
+html.dark .status-dot.dot-sorted    { box-shadow: 0 0 6px rgba(99, 153, 34, 0.55); }
+html.dark .status-dot.dot-pending   { box-shadow: 0 0 6px rgba(239, 159, 39, 0.55); }
+html.dark .status-dot.dot-skipped   { box-shadow: 0 0 6px rgba(226, 75, 74, 0.55); }
+
+/* ─── Status pills ───────────────────────────────────────────────────────── */
+.status-pill {
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  display: inline-block;
+}
+html.dark .status-pill { backdrop-filter: blur(8px); }
+
+.pill-sorted    { background: var(--c-sorted-bg);    border: 1px solid rgba(99, 153, 34, 0.4);   color: var(--c-sorted-text); }
+.pill-pending   { background: var(--c-pending-bg);   border: 1px solid rgba(239, 159, 39, 0.4);  color: var(--c-pending-text); }
+.pill-skipped   { background: var(--c-skipped-bg);   border: 1px solid rgba(226, 75, 74, 0.4);   color: var(--c-skipped-text); }
+.pill-untouched { background: var(--c-untouched-bg); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--c-untouched-text); }
+html:not(.dark) .pill-untouched { border-color: #d1d5db; }
+
+/* ─── Progress bar ───────────────────────────────────────────────────────── */
+.progress-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+html:not(.dark) .progress-track { background: var(--c-border-light); }
+
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(90deg, #660066, #CC3399);
+  box-shadow: 0 0 8px rgba(204, 51, 153, 0.4);
+}
+html:not(.dark) .progress-fill {
+  background: #639922;
+  box-shadow: none;
+}
+
+/* ─── Select dropdowns (global) ─────────────────────────────────────────── */
+select {
+  border: 1px solid rgba(204, 51, 153, 0.3);
+  border-radius: 8px;
+  font-size: 13px;
+  padding: 6px 28px 6px 10px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  font-family: inherit;
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+select:focus {
+  outline: none;
+  border-color: rgba(204, 51, 153, 0.6);
+  box-shadow: 0 0 0 3px rgba(204, 51, 153, 0.12);
+}
+
+/* Dark mode selects — color-scheme: dark forces Chromium's native
+   dropdown popup to render with a dark background so text is readable */
+html.dark select {
+  background-color: rgba(30, 0, 40, 0.95);
+  color: #F5F0FF;
+  color-scheme: dark;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23CC3399' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+html.dark select option {
+  background: #1A0023;
+  color: #F5F0FF;
+}
+
+/* Light mode selects */
+html:not(.dark) select {
+  background-color: #ffffff;
+  color: #1A1A1A;
+  color-scheme: light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23990099' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+html:not(.dark) select option {
+  background: #ffffff;
+  color: #1A1A1A;
+}
+
+/* ─── Input focus in dark mode ──────────────────────────────────────────── */
+html.dark input:focus,
+html.dark select:focus {
+  outline: none;
+  border-color: rgba(204, 51, 153, 0.6) !important;
+  background: rgba(204, 51, 153, 0.08) !important;
+  box-shadow: 0 0 0 3px rgba(204, 51, 153, 0.12) !important;
+}
+
+/* ─── Modal overlay ──────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+html.dark .modal-overlay {
+  background: rgba(13, 0, 16, 0.82);
+  backdrop-filter: blur(8px);
+}
+html:not(.dark) .modal-overlay { background: rgba(0, 0, 0, 0.4); }
+
+.modal-panel {
+  border-radius: 20px;
+  padding: 28px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+html.dark .modal-panel {
+  background: rgba(26, 0, 35, 0.92);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(204, 51, 153, 0.2);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+html:not(.dark) .modal-panel {
+  background: #ffffff;
+  border: 0.5px solid #e5e7eb;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+/* ─── Sidebar ────────────────────────────────────────────────────────────── */
+html.dark .sidebar {
+  background: rgba(26, 0, 35, 0.78) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-right-color: rgba(204, 51, 153, 0.15) !important;
+}
+
+/* ─── Table header in dark (bills, debt) ────────────────────────────────── */
+html.dark .table-header-row {
+  background: rgba(153, 0, 153, 0.12);
+  border-bottom: 1px solid rgba(204, 51, 153, 0.2);
+  color: rgba(204, 51, 153, 0.8);
+}
+html:not(.dark) .table-header-row {
+  background: var(--c-bg-row);
+  border-bottom: 0.5px solid var(--c-border);
+  color: var(--c-text-4);
+}
+
+/* ─── Tab buttons ────────────────────────────────────────────────────────── */
+html.dark .tab-btn-active {
+  background: rgba(153, 0, 153, 0.3) !important;
+  color: #F5F0FF !important;
+  border-color: rgba(204, 51, 153, 0.4) !important;
+}
+html.dark .tab-btn-inactive {
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: rgba(230, 230, 230, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+html.dark .tab-btn-inactive:hover {
+  background: rgba(204, 51, 153, 0.1) !important;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(204, 51, 153, 0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(204, 51, 153, 0.5); }

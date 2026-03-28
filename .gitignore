@@ -1,0 +1,30 @@
+# Claude Code internal files
+.claude/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Vite / electron-builder cache
+.vite/
+out/
+
+# Local data & database (user-specific, not part of source)
+payday-data.json
+payday.db
+payday-payslips/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+.env.local
