@@ -67,7 +67,7 @@ Housing · Utilities · Debt Repayment · Transport · Food & Living · Savings 
 
 ## Data & Privacy
 
-All data is stored locally in a single JSON file (`payday-data.json`) placed next to the installed application executable. Payslip PDFs are stored in a `payday-payslips/` folder in the same location. Nothing is sent to any server. There is no telemetry.
+All data is stored locally in a SQLite database (`payday.db`) placed next to the installed application executable. If a legacy `payday-data.json` file is found on first launch, it is automatically migrated to the database. Payslip PDFs are stored in a `payday-payslips/` folder in the same location. Nothing is sent to any server. There is no telemetry.
 
 ---
 
