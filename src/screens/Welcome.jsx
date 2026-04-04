@@ -17,13 +17,13 @@ function Dots({ step }) {
   )
 }
 
-export default function Welcome({ onComplete }) {
+export default function Welcome({ onComplete, revisit = false, onRevisitDone }) {
   const [step, setStep]       = useState(1)
   const [currency, setCurrency] = useState('GBP')
 
   const next   = () => setStep(s => Math.min(s + 1, TOTAL_STEPS))
   const back   = () => setStep(s => Math.max(s - 1, 1))
-  const finish = () => onComplete(currency)
+  const finish = () => revisit ? onRevisitDone() : onComplete(currency)
 
   return (
     <div style={{
@@ -57,7 +57,7 @@ export default function Welcome({ onComplete }) {
             </button>
           ) : (
             <button onClick={finish} className="btn-primary" style={{ padding: '10px 28px', fontSize: 14 }}>
-              Let's get started →
+              {revisit ? 'Back to dashboard →' : "Let's get started →"}
             </button>
           )}
         </div>

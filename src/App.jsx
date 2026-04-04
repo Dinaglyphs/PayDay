@@ -150,6 +150,7 @@ export default function App() {
       case 'annual':      return <AnnualWrap data={data} />
       case 'patterns':    return <AnnualWrap data={data} defaultTab="patterns" />
       case 'settings':    return <Settings data={data} persist={persist} toggleTheme={toggleTheme} />
+      case 'about':       return <Welcome revisit onRevisitDone={() => setCurrentScreen('session')} />
       case 'cycleDetail': {
         const cycle = (data.cycles || []).find(c => c.id === selectedCycleId)
         return <CycleDetail cycle={cycle} onBack={() => setCurrentScreen('session')} onDelete={deleteCycle} />

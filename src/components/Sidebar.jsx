@@ -176,6 +176,11 @@ export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCyc
         {navItem('patterns', 'Patterns', null)}
       </div>
 
+      {/* About */}
+      <div style={{ padding: '0 8px 6px', borderTop: '0.5px solid var(--c-border)' }}>
+        {navItem('about', 'About PayDay', null)}
+      </div>
+
       {/* Footer: Settings + Theme toggle */}
       <div style={{ marginTop: 'auto', padding: '8px 8px 0', borderTop: '0.5px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 4 }}>
         <button
