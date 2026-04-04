@@ -19,6 +19,7 @@ export default function App() {
   const [loading,         setLoading]         = useState(true)
   const [currentScreen,   setCurrentScreen]   = useState('session')
   const [selectedCycleId, setSelectedCycleId] = useState(null)
+  const [sidebarOpen,     setSidebarOpen]     = useState(false)
 
   // ── Auth listener ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -158,7 +159,6 @@ export default function App() {
   }
 
   const isDark = data.preferences?.theme === 'dark'
-  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
     <CurrencyProvider initialCurrency={data.preferences?.currency || 'GBP'}>
