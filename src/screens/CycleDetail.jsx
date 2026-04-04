@@ -88,43 +88,43 @@ export default function CycleDetail({ cycle, onBack, onDelete }) {
   const td = { padding: '9px 12px', fontSize: 13, color: 'var(--c-text-2)', borderBottom: '0.5px solid var(--c-border-light)' }
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 820 }}>
+    <div className="content-page">
 
-      {/* Back + title + actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
-        <button
-          onClick={onBack}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(204,51,153,0.8)', fontSize: 13, padding: '4px 0', display: 'flex', alignItems: 'center', gap: 4 }}
-        >
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polyline points="15 18 9 12 15 6"/></svg>
-          Back
-        </button>
-        <h1 style={{ fontSize: 17, fontWeight: 500, color: 'var(--c-text-1)', margin: 0, flex: 1 }}>Cycle — {cycle.date}</h1>
-
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+      {/* Back + title row */}
+      <div className="cycle-header">
+        <div className="cycle-header-top">
+          <button
+            onClick={onBack}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(204,51,153,0.8)', fontSize: 13, padding: '4px 0', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}
+          >
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+          </button>
+          <h1 style={{ fontSize: 17, fontWeight: 500, color: 'var(--c-text-1)', margin: 0, flex: 1 }}>Cycle — {cycle.date}</h1>
+        </div>
+        <div className="cycle-header-actions">
           <button onClick={handleExportXlsx} disabled={isExporting} className="btn-secondary" style={{ padding: '6px 14px', ...exportBtnStyle('xlsx') }}>
             {exportBtnLabel('xlsx')}
           </button>
           <button onClick={handleExportPdf} disabled={isExporting} className="btn-secondary" style={{ padding: '6px 14px', ...exportBtnStyle('pdf') }}>
             {exportBtnLabel('pdf')}
           </button>
+          {!confirmDelete ? (
+            <button onClick={() => setConfirmDelete(true)} className="btn-danger" style={{ padding: '6px 14px', fontSize: 12 }}>
+              Delete cycle
+            </button>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>Delete?</span>
+              <button onClick={() => onDelete(cycle.id)} className="btn-danger" style={{ padding: '5px 12px', fontSize: 12, background: 'rgba(226,75,74,0.25)', fontWeight: 500 }}>Yes</button>
+              <button onClick={() => setConfirmDelete(false)} className="btn-secondary" style={{ padding: '5px 10px', fontSize: 12 }}>No</button>
+            </div>
+          )}
         </div>
-
-        {!confirmDelete ? (
-          <button onClick={() => setConfirmDelete(true)} className="btn-danger" style={{ padding: '6px 14px', fontSize: 12 }}>
-            Delete cycle
-          </button>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>Delete this cycle?</span>
-            <button onClick={() => onDelete(cycle.id)} className="btn-danger" style={{ padding: '5px 12px', fontSize: 12, background: 'rgba(226,75,74,0.25)', fontWeight: 500 }}>Yes, delete</button>
-            <button onClick={() => setConfirmDelete(false)} className="btn-secondary" style={{ padding: '5px 10px', fontSize: 12 }}>Cancel</button>
-          </div>
-        )}
       </div>
 
       {/* Summary boxes */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 24 }}>
+      <div className="stats-grid-3" style={{ marginBottom: 24 }}>
         {[
           { label: 'Total income',  value: fmt(cycle.totalIncome) },
           { label: 'Confirmed out', value: fmt(confirmedOut) },
@@ -137,38 +137,65 @@ export default function CycleDetail({ cycle, onBack, onDelete }) {
         ))}
       </div>
 
-      {/* Bills table */}
+      {/* Bills */}
       <div className="glass-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
         <div style={{ padding: '14px 16px', borderBottom: '0.5px solid var(--c-border)' }}>
           <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--c-text-1)' }}>Bills</span>
         </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr className="table-header-row">
-              <th style={th}>Bill</th>
-              <th style={th}>Category</th>
-              <th style={{ ...th, textAlign: 'right' }}>Budgeted</th>
-              <th style={{ ...th, textAlign: 'right' }}>Actual</th>
-              <th style={th}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bills.map(bill => (
-              <tr key={bill.id || bill.name}>
-                <td style={{ ...td, color: 'var(--c-text-1)' }}>{bill.name}</td>
-                <td style={td}>{bill.category || '—'}</td>
-                <td style={{ ...td, textAlign: 'right' }}>{fmt(bill.budgeted)}</td>
-                <td style={{ ...td, textAlign: 'right', fontWeight: 500, color: 'var(--c-text-1)' }}>{fmt(bill.actual)}</td>
-                <td style={td}>
-                  <span className={`status-pill ${pillClass(bill.status)}`}>
-                    {(bill.status || 'untouched').charAt(0).toUpperCase() + (bill.status || 'untouched').slice(1)}
-                  </span>
-                </td>
+
+        {/* Desktop table */}
+        <div className="bills-table-desktop">
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr className="table-header-row">
+                <th style={th}>Bill</th>
+                <th style={th}>Category</th>
+                <th style={{ ...th, textAlign: 'right' }}>Budgeted</th>
+                <th style={{ ...th, textAlign: 'right' }}>Actual</th>
+                <th style={th}>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        <div style={{ display: 'flex', gap: 24, padding: '10px 16px', background: 'var(--c-bg-row)', borderTop: '0.5px solid var(--c-border)' }}>
+            </thead>
+            <tbody>
+              {bills.map(bill => (
+                <tr key={bill.id || bill.name}>
+                  <td style={{ ...td, color: 'var(--c-text-1)' }}>{bill.name}</td>
+                  <td style={td}>{bill.category || '—'}</td>
+                  <td style={{ ...td, textAlign: 'right' }}>{fmt(bill.budgeted)}</td>
+                  <td style={{ ...td, textAlign: 'right', fontWeight: 500, color: 'var(--c-text-1)' }}>{fmt(bill.actual)}</td>
+                  <td style={td}>
+                    <span className={`status-pill ${pillClass(bill.status)}`}>
+                      {(bill.status || 'untouched').charAt(0).toUpperCase() + (bill.status || 'untouched').slice(1)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile card list */}
+        <div className="bills-cards-mobile">
+          {bills.map(bill => (
+            <div key={bill.id || bill.name} style={{ padding: '10px 14px', borderBottom: '0.5px solid var(--c-border-light)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <span style={{ fontSize: 13, color: 'var(--c-text-1)', fontWeight: 500, flex: 1, marginRight: 8 }}>{bill.name}</span>
+                <span className={`status-pill ${pillClass(bill.status)}`}>
+                  {(bill.status || 'untouched').charAt(0).toUpperCase() + (bill.status || 'untouched').slice(1)}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--c-text-3)' }}>
+                <span>{bill.category || '—'}</span>
+                <span style={{ color: 'var(--c-text-2)' }}>
+                  <span style={{ color: 'var(--c-text-4)' }}>budget </span>{fmt(bill.budgeted)}
+                  <span style={{ margin: '0 6px', color: 'var(--c-border)' }}>·</span>
+                  <span style={{ color: 'var(--c-text-1)', fontWeight: 500 }}>actual </span>{fmt(bill.actual)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="bills-footer" style={{ display: 'flex', gap: 12, padding: '10px 14px', background: 'var(--c-bg-row)', borderTop: '0.5px solid var(--c-border)', flexWrap: 'wrap' }}>
           <span className="status-pill pill-sorted">Sorted: {fmt(billsConfirmedOut)}</span>
           <span className="status-pill pill-pending">Pending: {fmt(pendingTotal)}</span>
           <span className="status-pill pill-skipped">Skipped: {fmt(skippedTotal)}</span>
@@ -182,22 +209,12 @@ export default function CycleDetail({ cycle, onBack, onDelete }) {
           <div style={{ padding: '14px 16px', borderBottom: '0.5px solid var(--c-border)' }}>
             <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--c-text-1)' }}>Debt payments this cycle</span>
           </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr className="table-header-row">
-                <th style={th}>Debt</th>
-                <th style={{ ...th, textAlign: 'right' }}>Amount paid</th>
-              </tr>
-            </thead>
-            <tbody>
-              {payments.map((p, i) => (
-                <tr key={i}>
-                  <td style={td}>{p.debtName}</td>
-                  <td style={{ ...td, textAlign: 'right', fontWeight: 500, color: 'var(--c-sorted-text)' }}>{fmt(p.amountPaid)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {payments.map((p, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 14px', borderBottom: '0.5px solid var(--c-border-light)' }}>
+              <span style={{ fontSize: 13, color: 'var(--c-text-2)' }}>{p.debtName}</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--c-sorted-text)' }}>{fmt(p.amountPaid)}</span>
+            </div>
+          ))}
         </div>
       )}
 
@@ -207,22 +224,12 @@ export default function CycleDetail({ cycle, onBack, onDelete }) {
           <div style={{ padding: '14px 16px', borderBottom: '0.5px solid var(--c-border)' }}>
             <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--c-text-1)' }}>Debt balances at close</span>
           </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr className="table-header-row">
-                <th style={th}>Debt</th>
-                <th style={{ ...th, textAlign: 'right' }}>Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {snapshots.map((d, i) => (
-                <tr key={i}>
-                  <td style={td}>{d.name}</td>
-                  <td style={{ ...td, textAlign: 'right', fontWeight: 500, color: '#F5B942' }}>{fmt(d.balance)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {snapshots.map((d, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 14px', borderBottom: '0.5px solid var(--c-border-light)' }}>
+              <span style={{ fontSize: 13, color: 'var(--c-text-2)' }}>{d.name}</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: '#F5B942' }}>{fmt(d.balance)}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>

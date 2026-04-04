@@ -164,21 +164,21 @@ export default function Session({ data, persist }) {
   const untouchedTotal = session.bills.filter(b => b.status === 'untouched').reduce((s, b) => s + (parseFloat(b.budgeted) || 0), 0)
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 900 }}>
+    <div className="content-page" style={{ maxWidth: 900 }}>
       {showStart && <StartSessionModal onConfirm={startSession} onClose={() => setShowStart(false)} />}
       {showClose && <CloseSessionModal session={session} template={template} onConfirm={closeSession} onClose={() => setShowClose(false)} />}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, gap: 10 }}>
         <div>
           <h1 style={{ fontSize: 16, fontWeight: 500, color: 'var(--c-text-1)', margin: '0 0 2px' }}>Payday session</h1>
           <span style={{ fontSize: 12, color: 'var(--c-text-4)' }}>{session.date}</span>
         </div>
-        <button onClick={() => setShowClose(true)} className="btn-secondary" style={{ padding: '8px 18px', fontSize: 13 }}>
+        <button onClick={() => setShowClose(true)} className="btn-secondary" style={{ padding: '8px 18px', fontSize: 13, flexShrink: 0 }}>
           Close cycle
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 16 }}>
+      <div className="stats-grid-4" style={{ marginBottom: 16 }}>
         <StatCard label="Total income" value={formatCurrency(session.totalIncome)} />
         <StatCard label="Confirmed out" value={formatCurrency(confirmedOut + debtPaid)} color="var(--c-sorted-text)" />
         <StatCard label="In motion" value={formatCurrency(inMotion)} color="var(--c-pending-text)" />
@@ -197,10 +197,10 @@ export default function Session({ data, persist }) {
           </div>
         </div>
 
-        <div className="table-header-row" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 14px' }}>
+        <div className="table-header-row bill-list-header" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 14px' }}>
           <div style={{ width: 8 }} />
           <div style={{ flex: 1, fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bill</div>
-          <div style={{ minWidth: 70, fontSize: 11, fontWeight: 500, textAlign: 'right', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Budgeted</div>
+          <div className="col-budgeted" style={{ minWidth: 70, fontSize: 11, fontWeight: 500, textAlign: 'right', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Budgeted</div>
           <div style={{ minWidth: 80, fontSize: 11, fontWeight: 500, textAlign: 'right', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Actual</div>
           <div style={{ minWidth: 80, fontSize: 11, fontWeight: 500, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status</div>
         </div>
@@ -249,7 +249,7 @@ export default function Session({ data, persist }) {
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="session-bottom-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         {/* Debt snapshot */}
         <div className="glass-card" style={{ padding: '16px 16px' }}>
           <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--c-text-1)', marginBottom: 14 }}>Debt snapshot</div>

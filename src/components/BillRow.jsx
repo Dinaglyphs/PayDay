@@ -42,7 +42,7 @@ export default function BillRow({ bill, onStatusChange, onActualChange, onUpdate
           <div style={{ fontSize: 11, color: 'var(--c-text-4)' }}>{bill.category}</div>
         </div>
 
-        <div style={{ fontSize: 13, color: 'var(--c-text-3)', minWidth: 70, textAlign: 'right' }}>
+        <div className="col-budgeted" style={{ fontSize: 13, color: 'var(--c-text-3)', minWidth: 70, textAlign: 'right' }}>
           {formatCurrency(bill.budgeted)}
         </div>
 
