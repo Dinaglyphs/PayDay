@@ -68,7 +68,7 @@ export default function Settings({ data, persist, toggleTheme }) {
   })
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 800 }}>
+    <div className="content-page" style={{ maxWidth: 800 }}>
       <h1 style={{ fontSize: 16, fontWeight: 500, color: 'var(--c-text-1)', margin: '0 0 20px' }}>Settings</h1>
 
       {deleteConfirm && (
@@ -107,60 +107,62 @@ export default function Settings({ data, persist, toggleTheme }) {
 
       {tab === 'bills' && (
         <div className="glass-card" style={{ overflow: 'hidden' }}>
-          <div className="table-header-row" style={{ display: 'grid', gridTemplateColumns: '1fr 150px 100px 60px', gap: 10, padding: '8px 16px' }}>
-            {['Name', 'Category', 'Amount', ''].map(h => (
-              <div key={h} style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</div>
-            ))}
+          <div className="table-header-row settings-row" style={{ padding: '8px 16px' }}>
+            <div className="settings-col-name" style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Name</div>
+            <div className="settings-col-cat" style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Category</div>
+            <div className="settings-col-amount" style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Amount</div>
+            <div style={{ width: 44 }} />
           </div>
           {template.bills.map(bill => (
-            <div key={bill.id} style={{ display: 'grid', gridTemplateColumns: '1fr 150px 100px 60px', gap: 10, padding: '9px 16px', borderBottom: '0.5px solid var(--c-border-light)', alignItems: 'center' }}>
-              <input type="text" value={bill.name} onChange={e => updateBill(bill.id, 'name', e.target.value)} style={{ ...inp }} />
-              <select value={bill.category} onChange={e => updateBill(bill.id, 'category', e.target.value)}>
+            <div key={bill.id} className="settings-row" style={{ padding: '9px 16px', borderBottom: '0.5px solid var(--c-border-light)' }}>
+              <input type="text" value={bill.name} onChange={e => updateBill(bill.id, 'name', e.target.value)} className="settings-col-name" style={{ ...inp }} />
+              <select value={bill.category} onChange={e => updateBill(bill.id, 'category', e.target.value)} className="settings-col-cat">
                 {CATEGORIES.map(c => <option key={c}>{c}</option>)}
               </select>
               <input type="text" inputMode="decimal" value={bill.budgeted}
                 onChange={e => { if (/^\d*\.?\d*$/.test(e.target.value) || e.target.value === '') updateBill(bill.id, 'budgeted', e.target.value === '' ? 0 : parseFloat(e.target.value) || 0) }}
-                style={{ ...inp, textAlign: 'right' }} />
-              <button onClick={() => setDeleteConfirm({ ...bill, _type: 'bill' })} className="btn-danger" style={{ padding: '4px 8px', fontSize: 12 }}>Del</button>
+                className="settings-col-amount" style={{ ...inp, textAlign: 'right' }} />
+              <button onClick={() => setDeleteConfirm({ ...bill, _type: 'bill' })} className="btn-danger settings-col-del" style={{ padding: '4px 8px', fontSize: 12 }}>Del</button>
             </div>
           ))}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 150px 100px 60px', gap: 10, padding: '10px 16px', borderTop: '0.5px solid var(--c-border-light)', background: 'var(--c-bg-row)', alignItems: 'center' }}>
-            <input type="text" placeholder="Bill name" value={newBill.name} onChange={e => setNewBill(p => ({ ...p, name: e.target.value }))} style={{ ...inp }} />
-            <select value={newBill.category} onChange={e => setNewBill(p => ({ ...p, category: e.target.value }))}>
+          <div className="settings-row" style={{ padding: '10px 16px', borderTop: '0.5px solid var(--c-border-light)', background: 'var(--c-bg-row)' }}>
+            <input type="text" placeholder="Bill name" value={newBill.name} onChange={e => setNewBill(p => ({ ...p, name: e.target.value }))} className="settings-col-name" style={{ ...inp }} />
+            <select value={newBill.category} onChange={e => setNewBill(p => ({ ...p, category: e.target.value }))} className="settings-col-cat">
               {CATEGORIES.map(c => <option key={c}>{c}</option>)}
             </select>
-            <input type="text" placeholder="Amount" value={newBill.budgeted} onChange={e => /^\d*\.?\d*$/.test(e.target.value) || e.target.value === '' ? setNewBill(p => ({ ...p, budgeted: e.target.value })) : null} style={{ ...inp, textAlign: 'right' }} />
-            <button onClick={addBill} className="btn-primary" style={{ padding: '6px 10px', fontSize: 12 }}>Add</button>
+            <input type="text" placeholder="Amount" value={newBill.budgeted} onChange={e => /^\d*\.?\d*$/.test(e.target.value) || e.target.value === '' ? setNewBill(p => ({ ...p, budgeted: e.target.value })) : null} className="settings-col-amount" style={{ ...inp, textAlign: 'right' }} />
+            <button onClick={addBill} className="btn-primary settings-col-del" style={{ padding: '6px 10px', fontSize: 12 }}>Add</button>
           </div>
         </div>
       )}
 
       {tab === 'debts' && (
         <div className="glass-card" style={{ overflow: 'hidden' }}>
-          <div className="table-header-row" style={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 60px', gap: 10, padding: '8px 16px' }}>
-            {['Name', 'Type', 'Balance', ''].map(h => (
-              <div key={h} style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</div>
-            ))}
+          <div className="table-header-row settings-row" style={{ padding: '8px 16px' }}>
+            <div className="settings-col-name" style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Name</div>
+            <div className="settings-col-cat" style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Type</div>
+            <div className="settings-col-amount" style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Balance</div>
+            <div style={{ width: 44 }} />
           </div>
           {template.debts.map(debt => (
-            <div key={debt.id} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 60px', gap: 10, padding: '9px 16px', borderBottom: '0.5px solid var(--c-border-light)', alignItems: 'center' }}>
-              <input type="text" value={debt.name} onChange={e => updateDebt(debt.id, 'name', e.target.value)} style={{ ...inp }} />
-              <select value={debt.type} onChange={e => updateDebt(debt.id, 'type', e.target.value)}>
+            <div key={debt.id} className="settings-row" style={{ padding: '9px 16px', borderBottom: '0.5px solid var(--c-border-light)' }}>
+              <input type="text" value={debt.name} onChange={e => updateDebt(debt.id, 'name', e.target.value)} className="settings-col-name" style={{ ...inp }} />
+              <select value={debt.type} onChange={e => updateDebt(debt.id, 'type', e.target.value)} className="settings-col-cat">
                 {DEBT_TYPES.map(t => <option key={t}>{t}</option>)}
               </select>
               <input type="text" inputMode="decimal" value={debt.startingBalance}
                 onChange={e => { if (/^\d*\.?\d*$/.test(e.target.value) || e.target.value === '') updateDebt(debt.id, 'startingBalance', e.target.value === '' ? 0 : parseFloat(e.target.value) || 0) }}
-                style={{ ...inp, textAlign: 'right' }} />
-              <button onClick={() => setDeleteConfirm({ ...debt, _type: 'debt' })} className="btn-danger" style={{ padding: '4px 8px', fontSize: 12 }}>Del</button>
+                className="settings-col-amount" style={{ ...inp, textAlign: 'right' }} />
+              <button onClick={() => setDeleteConfirm({ ...debt, _type: 'debt' })} className="btn-danger settings-col-del" style={{ padding: '4px 8px', fontSize: 12 }}>Del</button>
             </div>
           ))}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 60px', gap: 10, padding: '10px 16px', borderTop: '0.5px solid var(--c-border-light)', background: 'var(--c-bg-row)', alignItems: 'center' }}>
-            <input type="text" placeholder="Debt name" value={newDebt.name} onChange={e => setNewDebt(p => ({ ...p, name: e.target.value }))} style={{ ...inp }} />
-            <select value={newDebt.type} onChange={e => setNewDebt(p => ({ ...p, type: e.target.value }))}>
+          <div className="settings-row" style={{ padding: '10px 16px', borderTop: '0.5px solid var(--c-border-light)', background: 'var(--c-bg-row)' }}>
+            <input type="text" placeholder="Debt name" value={newDebt.name} onChange={e => setNewDebt(p => ({ ...p, name: e.target.value }))} className="settings-col-name" style={{ ...inp }} />
+            <select value={newDebt.type} onChange={e => setNewDebt(p => ({ ...p, type: e.target.value }))} className="settings-col-cat">
               {DEBT_TYPES.map(t => <option key={t}>{t}</option>)}
             </select>
-            <input type="text" placeholder="Balance" value={newDebt.startingBalance} onChange={e => /^\d*\.?\d*$/.test(e.target.value) || e.target.value === '' ? setNewDebt(p => ({ ...p, startingBalance: e.target.value })) : null} style={{ ...inp, textAlign: 'right' }} />
-            <button onClick={addDebt} className="btn-primary" style={{ padding: '6px 10px', fontSize: 12 }}>Add</button>
+            <input type="text" placeholder="Balance" value={newDebt.startingBalance} onChange={e => /^\d*\.?\d*$/.test(e.target.value) || e.target.value === '' ? setNewDebt(p => ({ ...p, startingBalance: e.target.value })) : null} className="settings-col-amount" style={{ ...inp, textAlign: 'right' }} />
+            <button onClick={addDebt} className="btn-primary settings-col-del" style={{ padding: '6px 10px', fontSize: 12 }}>Add</button>
           </div>
         </div>
       )}

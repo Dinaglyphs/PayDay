@@ -438,6 +438,11 @@ html.dark .tab-btn-inactive:hover {
   max-width: 820px;
 }
 
+.stats-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
 .stats-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -449,6 +454,26 @@ html.dark .tab-btn-inactive:hover {
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
 }
+
+/* ─── Settings rows ──────────────────────────────────────────────────────── */
+/* Desktop: all items in one line */
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.settings-col-name   { flex: 1; min-width: 0; }
+.settings-col-cat    { flex: 0 0 150px; }
+.settings-col-amount { flex: 0 0 100px; }
+.settings-col-del    { flex: 0 0 44px; }
+
+/* ─── DebtTracker add form ───────────────────────────────────────────────── */
+.add-debt-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.add-debt-name { flex: 1; min-width: 0; }
 
 /* Cycle header: back+title row on left, actions on right */
 .cycle-header {
@@ -571,5 +596,36 @@ html.dark .tab-btn-inactive:hover {
     justify-content: flex-start !important;
     text-align: left !important;
     padding: 12px 16px !important;
+  }
+
+  /* Stats 2-col grid stays 2-col (already fine on mobile) */
+  .stats-grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Settings: name takes full row, secondary fields wrap below */
+  .settings-row {
+    flex-wrap: wrap !important;
+  }
+  .settings-col-name {
+    flex: 1 1 100% !important;
+  }
+  .settings-col-cat {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+  .settings-col-amount {
+    flex: 0 0 90px !important;
+  }
+  .settings-col-del {
+    flex: 0 0 auto !important;
+  }
+
+  /* DebtTracker add form: name full width, rest on next row */
+  .add-debt-form {
+    flex-wrap: wrap !important;
+  }
+  .add-debt-name {
+    flex: 1 1 100% !important;
   }
 }

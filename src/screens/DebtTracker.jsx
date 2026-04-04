@@ -71,11 +71,11 @@ export default function DebtTracker({ data, persist }) {
   const cycles = data.cycles || []
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 800 }}>
+    <div className="content-page" style={{ maxWidth: 800 }}>
       <h1 style={{ fontSize: 16, fontWeight: 500, color: 'var(--c-text-1)', margin: '0 0 20px' }}>Debt tracker</h1>
 
       {/* Top summary */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+      <div className="stats-grid-2" style={{ gap: 12, marginBottom: 24 }}>
         <div className="glass-card stat-card" style={{ padding: '18px 22px' }}>
           <div style={{ fontSize: 11, color: 'var(--c-text-4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
             Total outstanding
@@ -156,7 +156,7 @@ export default function DebtTracker({ data, persist }) {
               </div>
 
               {/* Stats row */}
-              <div style={{ display: 'flex', gap: 24, marginBottom: 12 }}>
+              <div className="debt-stats-row" style={{ display: 'flex', gap: 16, marginBottom: 12, flexWrap: 'wrap' }}>
                 <div>
                   <div style={{ fontSize: 10, color: 'var(--c-text-4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>Original balance</div>
                   <div style={{ fontSize: 13, color: 'var(--c-text-2)' }}>{formatCurrency(originalBalance)}</div>
@@ -191,11 +191,12 @@ export default function DebtTracker({ data, persist }) {
       {/* Add debt form */}
       <div className="glass-card" style={{ padding: '16px 20px', marginTop: 12 }}>
         <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--c-text-3)', marginBottom: 10 }}>Add debt</div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="add-debt-form">
           <input
             type="text" placeholder="Debt name" value={newDebt.name}
             onChange={e => setNewDebt(p => ({ ...p, name: e.target.value }))}
-            style={{ flex: 1, padding: '7px 10px', border: '0.5px solid var(--c-input-border)', borderRadius: 6, fontSize: 13, outline: 'none', background: 'var(--c-input-bg)', color: 'var(--c-text-1)' }}
+            className="add-debt-name"
+            style={{ padding: '7px 10px', border: '0.5px solid var(--c-input-border)', borderRadius: 6, fontSize: 13, outline: 'none', background: 'var(--c-input-bg)', color: 'var(--c-text-1)' }}
           />
           <select
             value={newDebt.type}
