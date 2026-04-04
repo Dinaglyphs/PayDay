@@ -14,7 +14,7 @@ function getCycleEndBalance(cycle) {
   return cycle.totalIncome - totalOut - debtPaid
 }
 
-export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCycle, deleteCycle, isDark, toggleTheme }) {
+export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCycle, deleteCycle, isDark, toggleTheme, onSignOut }) {
   const { formatAmount: formatCurrency } = useCurrency()
   const cycles = data.cycles || []
   const recentCycles = [...cycles].reverse().slice(0, 10)
@@ -220,7 +220,28 @@ export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCyc
         </button>
       </div>
 
-      {/* Attribution footer */}
+      {/* Sign out + Attribution */}
+      <div style={{ padding: '8px 8px 0', borderTop: '0.5px solid var(--c-border)' }}>
+        {onSignOut && (
+          <button
+            onClick={onSignOut}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 6,
+              padding: '7px 12px', borderRadius: 6, border: 'none',
+              background: 'transparent', color: 'var(--c-text-4)', fontSize: 13, cursor: 'pointer',
+              textAlign: 'left',
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = isDark ? '#F06B6A' : '#dc2626'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--c-text-4)'}
+          >
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Sign out
+          </button>
+        )}
+      </div>
+
       <div style={{
         padding: '12px 16px',
         borderTop: '1px solid rgba(204, 51, 153, 0.12)',

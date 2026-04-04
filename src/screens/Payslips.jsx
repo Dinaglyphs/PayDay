@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
+import { supabase } from '../lib/supabase'
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -13,41 +14,48 @@ const th = {
 }
 
 export default function Payslips({ data, persist }) {
-  const now          = new Date()
+  const now           = new Date()
   const [month,        setMonth]        = useState(now.getMonth() + 1)
   const [year,         setYear]         = useState(now.getFullYear())
-  const [uploadState,  setUploadState]  = useState(null)   // null | 'uploading' | 'done' | 'error'
-  const [dlStates,     setDlStates]     = useState({})     // { [id]: 'loading' | 'done' | 'error' }
+  const [uploadState,  setUploadState]  = useState(null)
+  const [dlStates,     setDlStates]     = useState({})
   const [confirmDelId, setConfirmDelId] = useState(null)
+  const fileInputRef  = useRef(null)
 
   const payslips = [...(data.payslips || [])].sort((a, b) => {
     if (b.year !== a.year) return b.year - a.year
     return b.month - a.month
   })
 
-  // ── Upload ───────────────────────────────────────────────────────────────
+  // ── Upload ────────────────────────────────────────────────────────────────
 
-  async function handleUpload() {
-    if (!window.paydayAPI?.uploadPayslip) {
-      setUploadState('error')
-      setTimeout(() => setUploadState(null), 3000)
-      return
-    }
+  async function handleFileChosen(e) {
+    const file = e.target.files?.[0]
+    if (!fileInputRef.current) return
+    fileInputRef.current.value = ''   // reset so same file can be re-chosen
+    if (!file) return
+
     setUploadState('uploading')
     try {
-      const result = await window.paydayAPI.uploadPayslip({
-        month: parseInt(month),
-        year:  parseInt(year),
-      })
-      if (result?.canceled) { setUploadState(null); return }
-      if (!result?.success) {
-        console.error('Upload failed:', result?.error)
-        setUploadState('error')
-        setTimeout(() => setUploadState(null), 3000)
-        return
+      const { data: { session } } = await supabase.auth.getSession()
+      const uid = session.user.id
+
+      const id       = Date.now().toString(36) + Math.random().toString(36).slice(2)
+      const filename = `payslip-${year}-${String(month).padStart(2, '0')}-${id}.pdf`
+      const storagePath = `${uid}/${filename}`
+
+      const { error } = await supabase.storage.from('payslips').upload(storagePath, file, { contentType: 'application/pdf' })
+      if (error) throw error
+
+      const payslip = {
+        id,
+        month:        parseInt(month),
+        year:         parseInt(year),
+        filename,
+        originalName: file.name,
+        uploadedAt:   new Date().toISOString(),
       }
-      const newPayslips = [...(data.payslips || []), result.payslip]
-      await persist({ ...data, payslips: newPayslips })
+      await persist({ ...data, payslips: [...(data.payslips || []), payslip] })
       setUploadState('done')
       setTimeout(() => setUploadState(null), 2500)
     } catch (err) {
@@ -57,20 +65,25 @@ export default function Payslips({ data, persist }) {
     }
   }
 
-  // ── Download ─────────────────────────────────────────────────────────────
+  // ── Download ──────────────────────────────────────────────────────────────
 
   async function handleDownload(p) {
-    if (!window.paydayAPI?.downloadPayslip) return
     setDlStates(s => ({ ...s, [p.id]: 'loading' }))
     try {
-      const result = await window.paydayAPI.downloadPayslip({
-        filename: p.filename,
-        month:    p.month,
-        year:     p.year,
-      })
-      if (result?.canceled) { setDlStates(s => ({ ...s, [p.id]: null })); return }
-      setDlStates(s => ({ ...s, [p.id]: result?.success ? 'done' : 'error' }))
-      if (!result?.success) console.error('Download failed:', result?.error)
+      const { data: { session } } = await supabase.auth.getSession()
+      const uid = session.user.id
+      const storagePath = `${uid}/${p.filename}`
+
+      const { data: blob, error } = await supabase.storage.from('payslips').download(storagePath)
+      if (error) throw error
+
+      const url = URL.createObjectURL(blob)
+      const a   = document.createElement('a')
+      a.href     = url
+      a.download = p.originalName || `Payslip-${p.year}-${String(p.month).padStart(2, '0')}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+      setDlStates(s => ({ ...s, [p.id]: 'done' }))
     } catch (err) {
       console.error('Download error:', err)
       setDlStates(s => ({ ...s, [p.id]: 'error' }))
@@ -83,18 +96,18 @@ export default function Payslips({ data, persist }) {
 
   async function handleDelete(p) {
     try {
-      if (window.paydayAPI?.deletePayslip) {
-        await window.paydayAPI.deletePayslip({ filename: p.filename })
-      }
+      const { data: { session } } = await supabase.auth.getSession()
+      const uid = session.user.id
+      await supabase.storage.from('payslips').remove([`${uid}/${p.filename}`])
     } catch (err) {
-      console.error('Delete file error:', err)
+      console.error('Storage delete error:', err)
     }
     const newPayslips = (data.payslips || []).filter(x => x.id !== p.id)
     await persist({ ...data, payslips: newPayslips })
     setConfirmDelId(null)
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 760 }}>
@@ -102,7 +115,7 @@ export default function Payslips({ data, persist }) {
         Payslips
       </h1>
 
-      {/* ── Upload card ─────────────────────────────────────────────────────── */}
+      {/* Upload card */}
       <div className="glass-card" style={{ padding: '18px 20px', marginBottom: 24 }}>
         <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--c-text-1)', marginBottom: 14 }}>
           Upload a payslip
@@ -112,55 +125,49 @@ export default function Payslips({ data, persist }) {
 
           {/* Month */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            <label style={{ fontSize: 11, color: 'var(--c-text-4)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-              Month
-            </label>
+            <label style={{ fontSize: 11, color: 'var(--c-text-4)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Month</label>
             <select
               value={month}
               onChange={e => setMonth(parseInt(e.target.value))}
-              style={{
-                background: 'var(--c-bg-input)', border: '1px solid var(--c-input-border)',
-                color: 'var(--c-text-1)', borderRadius: 6,
-                padding: '7px 10px', fontSize: 13, cursor: 'pointer',
-              }}
+              style={{ background: 'var(--c-bg-input)', border: '1px solid var(--c-input-border)', color: 'var(--c-text-1)', borderRadius: 6, padding: '7px 10px', fontSize: 13, cursor: 'pointer' }}
             >
-              {MONTHS.map((m, i) => (
-                <option key={i + 1} value={i + 1}>{m}</option>
-              ))}
+              {MONTHS.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
             </select>
           </div>
 
           {/* Year */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            <label style={{ fontSize: 11, color: 'var(--c-text-4)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-              Year
-            </label>
+            <label style={{ fontSize: 11, color: 'var(--c-text-4)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Year</label>
             <input
               type="number"
               value={year}
               onChange={e => setYear(parseInt(e.target.value))}
-              min={2000}
-              max={2099}
-              style={{
-                background: 'var(--c-bg-input)', border: '1px solid var(--c-input-border)',
-                color: 'var(--c-text-1)', borderRadius: 6,
-                padding: '7px 10px', fontSize: 13, width: 88,
-              }}
+              min={2000} max={2099}
+              style={{ background: 'var(--c-bg-input)', border: '1px solid var(--c-input-border)', color: 'var(--c-text-1)', borderRadius: 6, padding: '7px 10px', fontSize: 13, width: 88 }}
             />
           </div>
 
-          {/* Button */}
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            style={{ display: 'none' }}
+            onChange={handleFileChosen}
+          />
+
+          {/* Trigger button */}
           <button
-            onClick={handleUpload}
+            onClick={() => fileInputRef.current?.click()}
             disabled={uploadState === 'uploading'}
             className="btn-primary"
             style={{
               padding: '8px 20px', fontSize: 13,
-              ...(uploadState === 'done'  ? { background: 'rgba(99,153,34,0.2)', border: '1px solid rgba(99,153,34,0.4)', color: 'var(--c-sorted-text)' } : {}),
+              ...(uploadState === 'done'  ? { background: 'rgba(99,153,34,0.2)', border: '1px solid rgba(99,153,34,0.4)', color: 'var(--c-sorted-text)' }  : {}),
               ...(uploadState === 'error' ? { background: 'rgba(226,75,74,0.15)', border: '1px solid rgba(226,75,74,0.4)', color: 'var(--c-skipped-text)' } : {}),
             }}
           >
-            {uploadState === 'uploading' ? 'Opening...'
+            {uploadState === 'uploading' ? 'Uploading...'
              : uploadState === 'done'    ? '✓ Saved'
              : uploadState === 'error'   ? 'Error'
              : 'Upload PDF'}
@@ -168,22 +175,15 @@ export default function Payslips({ data, persist }) {
         </div>
 
         <div style={{ fontSize: 11, color: 'var(--c-text-4)', marginTop: 10, lineHeight: 1.5 }}>
-          PDF files only. Files are stored in a <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: 3 }}>payday-payslips</code> folder next to the app data.
+          PDF files only. Files are stored securely in the cloud and accessible from any browser.
         </div>
       </div>
 
-      {/* ── Saved payslips ───────────────────────────────────────────────────── */}
+      {/* Saved payslips */}
       <div className="glass-card" style={{ overflow: 'hidden' }}>
-        <div style={{
-          padding: '14px 16px', borderBottom: '0.5px solid var(--c-border)',
-          display: 'flex', alignItems: 'center', gap: 8,
-        }}>
+        <div style={{ padding: '14px 16px', borderBottom: '0.5px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--c-text-1)' }}>Saved payslips</span>
-          <span style={{
-            fontSize: 11, color: 'var(--c-text-4)',
-            background: 'rgba(255,255,255,0.06)', borderRadius: 10,
-            padding: '1px 8px',
-          }}>
+          <span style={{ fontSize: 11, color: 'var(--c-text-4)', background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '1px 8px' }}>
             {payslips.length}
           </span>
         </div>
@@ -204,13 +204,9 @@ export default function Payslips({ data, persist }) {
             </thead>
             <tbody>
               {payslips.map(p => {
-                const dlState   = dlStates[p.id]
+                const dlState    = dlStates[p.id]
                 const confirming = confirmDelId === p.id
-                const tdBase = {
-                  padding: '10px 16px', fontSize: 13,
-                  color: 'var(--c-text-2)',
-                  borderBottom: '0.5px solid var(--c-border-light)',
-                }
+                const tdBase     = { padding: '10px 16px', fontSize: 13, color: 'var(--c-text-2)', borderBottom: '0.5px solid var(--c-border-light)' }
                 return (
                   <tr key={p.id}>
                     <td style={{ ...tdBase, fontWeight: 500, color: 'var(--c-text-1)' }}>
@@ -226,16 +222,8 @@ export default function Payslips({ data, persist }) {
                       {confirming ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                           <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>Delete?</span>
-                          <button
-                            onClick={() => handleDelete(p)}
-                            className="btn-danger"
-                            style={{ padding: '4px 10px', fontSize: 12, fontWeight: 500 }}
-                          >Yes</button>
-                          <button
-                            onClick={() => setConfirmDelId(null)}
-                            className="btn-secondary"
-                            style={{ padding: '4px 10px', fontSize: 12 }}
-                          >No</button>
+                          <button onClick={() => handleDelete(p)} className="btn-danger" style={{ padding: '4px 10px', fontSize: 12, fontWeight: 500 }}>Yes</button>
+                          <button onClick={() => setConfirmDelId(null)} className="btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }}>No</button>
                         </span>
                       ) : (
                         <span style={{ display: 'inline-flex', gap: 6 }}>
@@ -249,16 +237,12 @@ export default function Payslips({ data, persist }) {
                               ...(dlState === 'error' ? { color: 'var(--c-skipped-text)' } : {}),
                             }}
                           >
-                            {dlState === 'loading' ? 'Saving...'
-                             : dlState === 'done'  ? '✓ Saved'
+                            {dlState === 'loading' ? 'Downloading...'
+                             : dlState === 'done'  ? '✓ Done'
                              : dlState === 'error' ? 'Error'
                              : 'Download'}
                           </button>
-                          <button
-                            onClick={() => setConfirmDelId(p.id)}
-                            className="btn-danger"
-                            style={{ padding: '4px 10px', fontSize: 12 }}
-                          >Delete</button>
+                          <button onClick={() => setConfirmDelId(p.id)} className="btn-danger" style={{ padding: '4px 10px', fontSize: 12 }}>Delete</button>
                         </span>
                       )}
                     </td>

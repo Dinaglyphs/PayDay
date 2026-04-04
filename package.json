@@ -12,6 +12,7 @@
     "generate-icons": "node scripts/generateIcon.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.101.1",
     "chart.js": "^4.4.0",
     "pdf-lib": "^1.17.1",
     "react": "^18.2.0",

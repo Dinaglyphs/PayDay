@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { supabase } from './lib/supabase'
 import { loadData, saveData, emptyData } from './store/dataStore'
 import { CurrencyProvider } from './context/CurrencyContext'
+import Auth from './screens/Auth'
 import Welcome from './screens/Welcome'
 import Setup from './screens/Setup'
 import Session from './screens/Session'
@@ -12,13 +14,38 @@ import Payslips from './screens/Payslips'
 import Sidebar from './components/Sidebar'
 
 export default function App() {
-  const [data, setData]                 = useState(null)
-  const [loading, setLoading]           = useState(true)
-  const [currentScreen, setCurrentScreen] = useState('session')
+  const [user,            setUser]            = useState(undefined) // undefined = checking, null = signed out
+  const [data,            setData]            = useState(null)
+  const [loading,         setLoading]         = useState(true)
+  const [currentScreen,   setCurrentScreen]   = useState('session')
   const [selectedCycleId, setSelectedCycleId] = useState(null)
 
+  // ── Auth listener ──────────────────────────────────────────────────────────
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+      if (!session) {
+        // Signed out — clear app data
+        setData(null)
+        setLoading(true)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // ── Load data once user is confirmed ──────────────────────────────────────
+  useEffect(() => {
+    if (!user) return
+
+    // Ensure dark class on html before data loads (avoids flash)
+    document.documentElement.classList.add('dark')
+
     async function init() {
+      setLoading(true)
       const loaded = await loadData()
       const d = loaded || emptyData()
       if (!d.preferences) d.preferences = {}
@@ -33,7 +60,7 @@ export default function App() {
       setLoading(false)
     }
     init()
-  }, [])
+  }, [user])
 
   const persist = useCallback(async (newData) => {
     setData(newData)
@@ -48,11 +75,15 @@ export default function App() {
     } else {
       document.documentElement.classList.remove('dark')
     }
-    const newData = { ...data, preferences: { ...(data.preferences || {}), theme: next } }
-    persist(newData)
+    persist({ ...data, preferences: { ...(data.preferences || {}), theme: next } })
   }
 
-  if (loading) {
+  function handleSignOut() {
+    supabase.auth.signOut()
+  }
+
+  // ── Auth check in progress ────────────────────────────────────────────────
+  if (user === undefined) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
         <span style={{ fontSize: 14, color: 'var(--c-text-3)' }}>Loading...</span>
@@ -60,48 +91,53 @@ export default function App() {
     )
   }
 
-  // Show welcome screen on first launch
+  // ── Not signed in ─────────────────────────────────────────────────────────
+  if (!user) {
+    return <Auth />
+  }
+
+  // ── Loading data ──────────────────────────────────────────────────────────
+  if (loading || !data) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+        <span style={{ fontSize: 14, color: 'var(--c-text-3)' }}>Loading your data...</span>
+      </div>
+    )
+  }
+
+  // ── Onboarding: welcome ───────────────────────────────────────────────────
   if (!data.preferences?.hasSeenWelcome) {
     return (
       <CurrencyProvider initialCurrency={data.preferences?.currency || 'GBP'}>
         <Welcome
           onComplete={(selectedCurrency) => {
-            const newData = {
+            persist({
               ...data,
-              preferences: {
-                ...(data.preferences || {}),
-                hasSeenWelcome: true,
-                currency: selectedCurrency,
-              }
-            }
-            persist(newData)
+              preferences: { ...(data.preferences || {}), hasSeenWelcome: true, currency: selectedCurrency },
+            })
           }}
         />
       </CurrencyProvider>
     )
   }
 
+  // ── Onboarding: setup ─────────────────────────────────────────────────────
   if (!data.template) {
     return (
       <CurrencyProvider initialCurrency={data.preferences?.currency || 'GBP'}>
-        <Setup
-          onComplete={(template) => {
-            const newData = { ...data, template }
-            persist(newData)
-          }}
-        />
+        <Setup onComplete={(template) => persist({ ...data, template })} />
       </CurrencyProvider>
     )
   }
 
+  // ── Main app ──────────────────────────────────────────────────────────────
   function viewCycle(cycleId) {
     setSelectedCycleId(cycleId)
     setCurrentScreen('cycleDetail')
   }
 
   function deleteCycle(cycleId) {
-    const newData = { ...data, cycles: (data.cycles || []).filter(c => c.id !== cycleId) }
-    persist(newData)
+    persist({ ...data, cycles: (data.cycles || []).filter(c => c.id !== cycleId) })
     setCurrentScreen('session')
   }
 
@@ -134,6 +170,7 @@ export default function App() {
           deleteCycle={deleteCycle}
           isDark={isDark}
           toggleTheme={toggleTheme}
+          onSignOut={handleSignOut}
         />
         <main style={{ flex: 1, overflowY: 'auto' }}>
           {renderScreen()}

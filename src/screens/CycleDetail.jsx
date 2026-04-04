@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useCurrency } from '../context/CurrencyContext'
+import { exportXlsx } from '../lib/exportXlsx'
+import { exportPdf }  from '../lib/exportPdf'
 
 const STATUS_ORDER = ['sorted', 'pending', 'skipped', 'untouched']
 
@@ -37,42 +39,28 @@ export default function CycleDetail({ cycle, onBack, onDelete }) {
   const isExporting = exportXlsxState === 'loading' || exportPdfState === 'loading'
 
   async function handleExportXlsx() {
-    if (!window.paydayAPI?.exportXlsx) {
-      setExportXlsxState('error')
-      setTimeout(() => setExportXlsxState(null), 3000)
-      return
-    }
     setExportXlsxState('loading')
     try {
-      const result = await window.paydayAPI.exportXlsx(cycle, symbol)
-      if (result?.canceled) { setExportXlsxState(null); return }
-      setExportXlsxState(result?.success ? 'done' : 'error')
-      if (!result?.success) console.error('XLSX export failed:', result?.error)
+      exportXlsx(cycle, symbol)
+      setExportXlsxState('done')
     } catch (err) {
-      console.error('XLSX export IPC error:', err)
+      console.error('XLSX export error:', err)
       setExportXlsxState('error')
     } finally {
-      setTimeout(() => setExportXlsxState(s => s !== 'loading' ? null : s), 3000)
+      setTimeout(() => setExportXlsxState(null), 3000)
     }
   }
 
   async function handleExportPdf() {
-    if (!window.paydayAPI?.exportPDF) {
-      setExportPdfState('error')
-      setTimeout(() => setExportPdfState(null), 3000)
-      return
-    }
     setExportPdfState('loading')
     try {
-      const result = await window.paydayAPI.exportPDF(cycle, symbol)
-      if (result?.canceled) { setExportPdfState(null); return }
-      setExportPdfState(result?.success ? 'done' : 'error')
-      if (!result?.success) console.error('PDF export failed:', result?.error)
+      await exportPdf(cycle, symbol)
+      setExportPdfState('done')
     } catch (err) {
-      console.error('PDF export IPC error:', err)
+      console.error('PDF export error:', err)
       setExportPdfState('error')
     } finally {
-      setTimeout(() => setExportPdfState(s => s !== 'loading' ? null : s), 3000)
+      setTimeout(() => setExportPdfState(null), 3000)
     }
   }
 
