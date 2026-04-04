@@ -208,7 +208,8 @@ export default function DebtTracker({ data, persist }) {
           <input
             type="text" placeholder="Balance" value={newDebt.startingBalance}
             onChange={e => /^\d*\.?\d*$/.test(e.target.value) || e.target.value === '' ? setNewDebt(p => ({ ...p, startingBalance: e.target.value })) : null}
-            style={{ width: 100, padding: '7px 10px', border: '0.5px solid var(--c-input-border)', borderRadius: 6, fontSize: 13, outline: 'none', textAlign: 'right', background: 'var(--c-input-bg)', color: 'var(--c-text-1)' }}
+            className="add-debt-balance"
+            style={{ padding: '7px 10px', border: '0.5px solid var(--c-input-border)', borderRadius: 6, fontSize: 13, outline: 'none', textAlign: 'right', background: 'var(--c-input-bg)', color: 'var(--c-text-1)' }}
           />
           <button onClick={addDebt} className="btn-primary" style={{ padding: '7px 18px', fontSize: 13 }}>
             Add

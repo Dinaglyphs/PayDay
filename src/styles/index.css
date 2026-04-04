@@ -472,8 +472,10 @@ html.dark .tab-btn-inactive:hover {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
-.add-debt-name { flex: 1; min-width: 0; }
+.add-debt-name    { flex: 1; min-width: 120px; }
+.add-debt-balance { flex: 0 0 100px; min-width: 0; }
 
 /* Cycle header: back+title row on left, actions on right */
 .cycle-header {
@@ -622,10 +624,11 @@ html.dark .tab-btn-inactive:hover {
   }
 
   /* DebtTracker add form: name full width, rest on next row */
-  .add-debt-form {
-    flex-wrap: wrap !important;
-  }
   .add-debt-name {
     flex: 1 1 100% !important;
+  }
+  .add-debt-balance {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
   }
 }

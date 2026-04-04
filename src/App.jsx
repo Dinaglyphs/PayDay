@@ -42,15 +42,15 @@ export default function App() {
   useEffect(() => {
     if (!user) return
 
-    // Ensure dark class on html before data loads (avoids flash)
-    document.documentElement.classList.add('dark')
+    // Remove dark class before we know the user's preference (default is light)
+    document.documentElement.classList.remove('dark')
 
     async function init() {
       setLoading(true)
       const loaded = await loadData()
       const d = loaded || emptyData()
       if (!d.preferences) d.preferences = {}
-      if (!d.preferences.theme)    d.preferences.theme    = 'dark'
+      if (!d.preferences.theme)    d.preferences.theme    = 'light'
       if (!d.preferences.currency) d.preferences.currency = 'GBP'
       setData(d)
       if (d.preferences.theme === 'dark') {
