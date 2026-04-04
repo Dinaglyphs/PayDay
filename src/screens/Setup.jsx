@@ -103,16 +103,18 @@ export default function Setup({ onComplete }) {
           {bills.map(bill => {
             const invalid = attempted && (!bill.budgeted || parseFloat(bill.budgeted) === 0)
             return (
-              <div key={bill.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '0.5px solid var(--c-border-light)' }}>
+              <div key={bill.id} className="setup-row" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '0.5px solid var(--c-border-light)' }}>
                 <input
                   type="text"
                   value={bill.name}
                   onChange={e => updateBillName(bill.id, e.target.value)}
+                  className="setup-row-name"
                   style={{ ...inp, flex: 1 }}
                 />
                 <select
                   value={bill.category}
                   onChange={e => updateBillCategory(bill.id, e.target.value)}
+                  className="setup-row-cat"
                   style={{ ...inp, padding: '6px 8px', fontSize: 12 }}
                 >
                   {CATEGORIES.map(c => <option key={c}>{c}</option>)}
@@ -144,9 +146,9 @@ export default function Setup({ onComplete }) {
           })}
 
           {/* Add new bill row */}
-          <div style={{ padding: '12px 14px', display: 'flex', gap: 8, alignItems: 'center', borderTop: '0.5px solid var(--c-border-light)' }}>
-            <input type="text" placeholder="Bill name" value={newBill.name} onChange={e => setNewBill(p => ({ ...p, name: e.target.value }))} style={{ ...inp, flex: 1 }} />
-            <select value={newBill.category} onChange={e => setNewBill(p => ({ ...p, category: e.target.value }))} style={{ ...inp, padding: '6px 8px', fontSize: 12 }}>
+          <div className="setup-row" style={{ padding: '12px 14px', display: 'flex', gap: 8, alignItems: 'center', borderTop: '0.5px solid var(--c-border-light)' }}>
+            <input type="text" placeholder="Bill name" value={newBill.name} onChange={e => setNewBill(p => ({ ...p, name: e.target.value }))} className="setup-row-name" style={{ ...inp, flex: 1 }} />
+            <select value={newBill.category} onChange={e => setNewBill(p => ({ ...p, category: e.target.value }))} className="setup-row-cat" style={{ ...inp, padding: '6px 8px', fontSize: 12 }}>
               {CATEGORIES.map(c => <option key={c}>{c}</option>)}
             </select>
             <input type="text" placeholder="Amount" value={newBill.budgeted} onChange={e => /^\d*\.?\d*$/.test(e.target.value) || e.target.value === '' ? setNewBill(p => ({ ...p, budgeted: e.target.value })) : null} style={{ ...inp, width: 90 }} />
@@ -187,9 +189,9 @@ export default function Setup({ onComplete }) {
             )
           })}
 
-          <div style={{ padding: '12px 14px', display: 'flex', gap: 8, alignItems: 'center', borderTop: '0.5px solid var(--c-border-light)' }}>
-            <input type="text" placeholder="Debt name" value={newDebt.name} onChange={e => setNewDebt(p => ({ ...p, name: e.target.value }))} style={{ ...inp, flex: 1 }} />
-            <select value={newDebt.type} onChange={e => setNewDebt(p => ({ ...p, type: e.target.value }))} style={{ ...inp, padding: '6px 8px', fontSize: 12 }}>
+          <div className="setup-row" style={{ padding: '12px 14px', display: 'flex', gap: 8, alignItems: 'center', borderTop: '0.5px solid var(--c-border-light)' }}>
+            <input type="text" placeholder="Debt name" value={newDebt.name} onChange={e => setNewDebt(p => ({ ...p, name: e.target.value }))} className="setup-row-name" style={{ ...inp, flex: 1 }} />
+            <select value={newDebt.type} onChange={e => setNewDebt(p => ({ ...p, type: e.target.value }))} className="setup-row-cat" style={{ ...inp, padding: '6px 8px', fontSize: 12 }}>
               {DEBT_TYPES.map(t => <option key={t}>{t}</option>)}
             </select>
             <input type="text" placeholder="Balance" value={newDebt.startingBalance} onChange={e => /^\d*\.?\d*$/.test(e.target.value) || e.target.value === '' ? setNewDebt(p => ({ ...p, startingBalance: e.target.value })) : null} style={{ ...inp, width: 90 }} />

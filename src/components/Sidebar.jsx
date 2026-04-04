@@ -14,7 +14,7 @@ function getCycleEndBalance(cycle) {
   return cycle.totalIncome - totalOut - debtPaid
 }
 
-export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCycle, deleteCycle, isDark, toggleTheme, onSignOut }) {
+export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCycle, deleteCycle, isDark, toggleTheme, onSignOut, sidebarOpen }) {
   const { formatAmount: formatCurrency } = useCurrency()
   const cycles = data.cycles || []
   const recentCycles = [...cycles].reverse().slice(0, 10)
@@ -47,7 +47,7 @@ export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCyc
 
   return (
     <div
-      className="sidebar"
+      className={sidebarOpen ? 'sidebar sidebar-open' : 'sidebar'}
       style={{
         width: 200, minWidth: 200, height: '100vh',
         background: 'var(--c-bg-sidebar)',

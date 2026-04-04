@@ -158,21 +158,39 @@ export default function App() {
   }
 
   const isDark = data.preferences?.theme === 'dark'
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
     <CurrencyProvider initialCurrency={data.preferences?.currency || 'GBP'}>
-      <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', position: 'relative' }}>
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div className="mobile-overlay" onClick={() => setSidebarOpen(false)} />
+        )}
         <Sidebar
           data={data}
           currentScreen={currentScreen}
-          setCurrentScreen={setCurrentScreen}
-          viewCycle={viewCycle}
+          setCurrentScreen={(s) => { setCurrentScreen(s); setSidebarOpen(false) }}
+          viewCycle={(id) => { viewCycle(id); setSidebarOpen(false) }}
           deleteCycle={deleteCycle}
           isDark={isDark}
           toggleTheme={toggleTheme}
           onSignOut={handleSignOut}
+          sidebarOpen={sidebarOpen}
         />
-        <main style={{ flex: 1, overflowY: 'auto' }}>
+        <main style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
+          {/* Mobile header with hamburger */}
+          <div className="mobile-header">
+            <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+              Menu
+            </button>
+            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--c-text-2)' }}>PayDay</span>
+          </div>
           {renderScreen()}
         </main>
       </div>
