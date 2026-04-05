@@ -52,7 +52,7 @@ export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCyc
         width: 200, minWidth: 200, height: '100vh',
         background: 'var(--c-bg-sidebar)',
         borderRight: '0.5px solid var(--c-border)',
-        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'hidden',
       }}
     >
       {/* App name */}
@@ -91,7 +91,7 @@ export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCyc
       </div>
 
       {/* History */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 8px 0' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 8px 0', minHeight: 0 }}>
         <div style={{
           fontSize: 11, fontWeight: 500,
           color: isDark ? 'rgba(204,51,153,0.65)' : 'var(--c-text-4)',
@@ -182,7 +182,7 @@ export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCyc
       </div>
 
       {/* Footer: Settings + Theme toggle */}
-      <div style={{ marginTop: 'auto', padding: '8px 8px 0', borderTop: '0.5px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 4 }}>
+      <div style={{ padding: '8px 8px 0', borderTop: '0.5px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 4 }}>
         <button
           onClick={() => setCurrentScreen('settings')}
           style={{
@@ -248,17 +248,18 @@ export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCyc
       </div>
 
       <div style={{
-        padding: '12px 16px',
+        padding: '6px 16px 10px',
         borderTop: '1px solid rgba(204, 51, 153, 0.12)',
         fontSize: '10px',
         color: 'rgba(230, 230, 230, 0.25)',
-        lineHeight: 1.5
+        lineHeight: 1.4,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       }}>
-        Vibecoded by<br />
-        <span style={{ color: 'rgba(204, 51, 153, 0.45)', fontStyle: 'italic' }}>
-          Opeyemi Daniel Abatan
-        </span>
-        <br />
+        Vibecoded by{' '}
+        <span style={{ color: 'rgba(204, 51, 153, 0.45)', fontStyle: 'italic' }}>Opeyemi Daniel Abatan</span>
+        {' '}
         <span style={{ color: 'rgba(204, 51, 153, 0.3)' }}>@dinaglyphs</span>
       </div>
     </div>
