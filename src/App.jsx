@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from './lib/supabase'
-import { loadData, saveData, emptyData } from './store/dataStore'
+import { loadData, savePreferences, saveTemplate, saveActiveSession, saveClosedCycle, deleteClosedCycle, emptyData } from './store/dataStore'
 import { CurrencyProvider } from './context/CurrencyContext'
+import ErrorBoundary from './components/ErrorBoundary'
 import Auth from './screens/Auth'
+import ResetPassword from './screens/ResetPassword'
 import Welcome from './screens/Welcome'
 import Setup from './screens/Setup'
 import Session from './screens/Session'
@@ -14,12 +16,16 @@ import Payslips from './screens/Payslips'
 import Sidebar from './components/Sidebar'
 
 export default function App() {
-  const [user,            setUser]            = useState(undefined) // undefined = checking, null = signed out
-  const [data,            setData]            = useState(null)
-  const [loading,         setLoading]         = useState(true)
-  const [currentScreen,   setCurrentScreen]   = useState('session')
-  const [selectedCycleId, setSelectedCycleId] = useState(null)
-  const [sidebarOpen,     setSidebarOpen]     = useState(false)
+  const [user,             setUser]             = useState(undefined) // undefined = checking, null = signed out
+  const [data,             setData]             = useState(null)
+  const [loading,          setLoading]          = useState(true)
+  const [currentScreen,    setCurrentScreen]    = useState('session')
+  const [selectedCycleId,  setSelectedCycleId]  = useState(null)
+  const [sidebarOpen,      setSidebarOpen]      = useState(false)
+  const [passwordRecovery, setPasswordRecovery] = useState(false)
+
+  // Track previous data state for smart diffing (no re-renders)
+  const dataRef = useRef(null)
 
   // ── Auth listener ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -27,12 +33,17 @@ export default function App() {
       setUser(session?.user ?? null)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordRecovery(true)
+        return
+      }
       setUser(session?.user ?? null)
       if (!session) {
-        // Signed out — clear app data
         setData(null)
+        dataRef.current = null
         setLoading(true)
+        setPasswordRecovery(false)
       }
     })
     return () => subscription.unsubscribe()
@@ -42,7 +53,6 @@ export default function App() {
   useEffect(() => {
     if (!user) return
 
-    // Remove dark class before we know the user's preference (default is light)
     document.documentElement.classList.remove('dark')
 
     async function init() {
@@ -52,6 +62,7 @@ export default function App() {
       if (!d.preferences) d.preferences = {}
       if (!d.preferences.theme)    d.preferences.theme    = 'light'
       if (!d.preferences.currency) d.preferences.currency = 'GBP'
+      dataRef.current = d
       setData(d)
       if (d.preferences.theme === 'dark') {
         document.documentElement.classList.add('dark')
@@ -63,9 +74,36 @@ export default function App() {
     init()
   }, [user])
 
-  const persist = useCallback(async (newData) => {
+  // ── Smart persist: only saves what changed ────────────────────────────────
+  const persist = useCallback((newData) => {
+    const prev = dataRef.current
+    dataRef.current = newData
     setData(newData)
-    await saveData(newData)
+
+    // Preferences changed?
+    if (newData.preferences !== prev?.preferences) {
+      savePreferences(newData.preferences).catch(console.error)
+    }
+
+    // Template changed?
+    if (newData.template !== prev?.template) {
+      saveTemplate(newData.template).catch(console.error)
+    }
+
+    // Active session changed?
+    if (newData.activeSession !== prev?.activeSession) {
+      saveActiveSession(newData.activeSession).catch(console.error)
+    }
+
+    // New closed cycles?
+    const prevIds = new Set((prev?.cycles || []).map(c => c.id))
+    const newIds  = new Set((newData.cycles || []).map(c => c.id))
+    ;(newData.cycles || []).filter(c => !prevIds.has(c.id)).forEach(c => saveClosedCycle(c).catch(console.error))
+
+    // Deleted closed cycles?
+    ;[...prevIds].filter(id => !newIds.has(id)).forEach(id => deleteClosedCycle(id).catch(console.error))
+
+    // Payslips are saved directly in Payslips.jsx via supabase storage — no action needed here
   }, [])
 
   function toggleTheme() {
@@ -87,9 +125,14 @@ export default function App() {
   if (user === undefined) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-        <span style={{ fontSize: 14, color: 'var(--c-text-3)' }}>Loading...</span>
+        <span style={{ fontSize: 14, color: 'var(--c-text-3)' }}>Loading…</span>
       </div>
     )
+  }
+
+  // ── Password recovery flow ────────────────────────────────────────────────
+  if (passwordRecovery) {
+    return <ResetPassword onDone={() => setPasswordRecovery(false)} />
   }
 
   // ── Not signed in ─────────────────────────────────────────────────────────
@@ -101,7 +144,7 @@ export default function App() {
   if (loading || !data) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-        <span style={{ fontSize: 14, color: 'var(--c-text-3)' }}>Loading your data...</span>
+        <span style={{ fontSize: 14, color: 'var(--c-text-3)' }}>Loading your data…</span>
       </div>
     )
   }
@@ -162,39 +205,41 @@ export default function App() {
   const isDark = data.preferences?.theme === 'dark'
 
   return (
-    <CurrencyProvider initialCurrency={data.preferences?.currency || 'GBP'}>
-      <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', position: 'relative' }}>
-        {/* Mobile overlay */}
-        {sidebarOpen && (
-          <div className="mobile-overlay" onClick={() => setSidebarOpen(false)} />
-        )}
-        <Sidebar
-          data={data}
-          currentScreen={currentScreen}
-          setCurrentScreen={(s) => { setCurrentScreen(s); setSidebarOpen(false) }}
-          viewCycle={(id) => { viewCycle(id); setSidebarOpen(false) }}
-          deleteCycle={deleteCycle}
-          isDark={isDark}
-          toggleTheme={toggleTheme}
-          onSignOut={handleSignOut}
-          sidebarOpen={sidebarOpen}
-        />
-        <main style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
-          {/* Mobile header with hamburger */}
-          <div className="mobile-header">
-            <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="6" x2="21" y2="6"/>
-                <line x1="3" y1="12" x2="21" y2="12"/>
-                <line x1="3" y1="18" x2="21" y2="18"/>
-              </svg>
-              Menu
-            </button>
-            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--c-text-2)' }}>PayDay</span>
-          </div>
-          {renderScreen()}
-        </main>
-      </div>
-    </CurrencyProvider>
+    <ErrorBoundary>
+      <CurrencyProvider initialCurrency={data.preferences?.currency || 'GBP'}>
+        <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', position: 'relative' }}>
+          {/* Mobile overlay */}
+          {sidebarOpen && (
+            <div className="mobile-overlay" onClick={() => setSidebarOpen(false)} />
+          )}
+          <Sidebar
+            data={data}
+            currentScreen={currentScreen}
+            setCurrentScreen={(s) => { setCurrentScreen(s); setSidebarOpen(false) }}
+            viewCycle={(id) => { viewCycle(id); setSidebarOpen(false) }}
+            deleteCycle={deleteCycle}
+            isDark={isDark}
+            toggleTheme={toggleTheme}
+            onSignOut={handleSignOut}
+            sidebarOpen={sidebarOpen}
+          />
+          <main style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
+            {/* Mobile header with hamburger */}
+            <div className="mobile-header">
+              <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <line x1="3" y1="12" x2="21" y2="12"/>
+                  <line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+                Menu
+              </button>
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--c-text-2)' }}>PayDay</span>
+            </div>
+            {renderScreen()}
+          </main>
+        </div>
+      </CurrencyProvider>
+    </ErrorBoundary>
   )
 }

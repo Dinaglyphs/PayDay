@@ -193,64 +193,117 @@ export default function Payslips({ data, persist }) {
             No payslips uploaded yet.
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr className="table-header-row">
-                <th style={th}>Period</th>
-                <th style={th}>Original file</th>
-                <th style={th}>Uploaded</th>
-                <th style={{ ...th, textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Desktop table */}
+            <table className="payslips-table-desktop" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr className="table-header-row">
+                  <th style={th}>Period</th>
+                  <th style={th}>Original file</th>
+                  <th style={th}>Uploaded</th>
+                  <th style={{ ...th, textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payslips.map(p => {
+                  const dlState    = dlStates[p.id]
+                  const confirming = confirmDelId === p.id
+                  const tdBase     = { padding: '10px 16px', fontSize: 13, color: 'var(--c-text-2)', borderBottom: '0.5px solid var(--c-border-light)' }
+                  return (
+                    <tr key={p.id}>
+                      <td style={{ ...tdBase, fontWeight: 500, color: 'var(--c-text-1)' }}>
+                        {MONTHS[p.month - 1]} {p.year}
+                      </td>
+                      <td style={{ ...tdBase, fontSize: 12, color: 'var(--c-text-3)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {p.originalName}
+                      </td>
+                      <td style={{ ...tdBase, fontSize: 12, color: 'var(--c-text-4)' }}>
+                        {new Date(p.uploadedAt).toLocaleDateString('en-GB')}
+                      </td>
+                      <td style={{ ...tdBase, textAlign: 'right' }}>
+                        {confirming ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>Delete?</span>
+                            <button onClick={() => handleDelete(p)} className="btn-danger" style={{ padding: '4px 10px', fontSize: 12, fontWeight: 500 }}>Yes</button>
+                            <button onClick={() => setConfirmDelId(null)} className="btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }}>No</button>
+                          </span>
+                        ) : (
+                          <span style={{ display: 'inline-flex', gap: 6 }}>
+                            <button
+                              onClick={() => handleDownload(p)}
+                              disabled={dlState === 'loading'}
+                              className="btn-secondary"
+                              style={{
+                                padding: '4px 12px', fontSize: 12,
+                                ...(dlState === 'done'  ? { color: 'var(--c-sorted-text)' }  : {}),
+                                ...(dlState === 'error' ? { color: 'var(--c-skipped-text)' } : {}),
+                              }}
+                            >
+                              {dlState === 'loading' ? 'Downloading...'
+                               : dlState === 'done'  ? '✓ Done'
+                               : dlState === 'error' ? 'Error'
+                               : 'Download'}
+                            </button>
+                            <button onClick={() => setConfirmDelId(p.id)} className="btn-danger" style={{ padding: '4px 10px', fontSize: 12 }}>Delete</button>
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+
+            {/* Mobile cards */}
+            <div className="payslips-cards-mobile">
               {payslips.map(p => {
                 const dlState    = dlStates[p.id]
                 const confirming = confirmDelId === p.id
-                const tdBase     = { padding: '10px 16px', fontSize: 13, color: 'var(--c-text-2)', borderBottom: '0.5px solid var(--c-border-light)' }
                 return (
-                  <tr key={p.id}>
-                    <td style={{ ...tdBase, fontWeight: 500, color: 'var(--c-text-1)' }}>
-                      {MONTHS[p.month - 1]} {p.year}
-                    </td>
-                    <td style={{ ...tdBase, fontSize: 12, color: 'var(--c-text-3)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {p.originalName}
-                    </td>
-                    <td style={{ ...tdBase, fontSize: 12, color: 'var(--c-text-4)' }}>
-                      {new Date(p.uploadedAt).toLocaleDateString('en-GB')}
-                    </td>
-                    <td style={{ ...tdBase, textAlign: 'right' }}>
-                      {confirming ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>Delete?</span>
-                          <button onClick={() => handleDelete(p)} className="btn-danger" style={{ padding: '4px 10px', fontSize: 12, fontWeight: 500 }}>Yes</button>
-                          <button onClick={() => setConfirmDelId(null)} className="btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }}>No</button>
-                        </span>
-                      ) : (
-                        <span style={{ display: 'inline-flex', gap: 6 }}>
-                          <button
-                            onClick={() => handleDownload(p)}
-                            disabled={dlState === 'loading'}
-                            className="btn-secondary"
-                            style={{
-                              padding: '4px 12px', fontSize: 12,
-                              ...(dlState === 'done'  ? { color: 'var(--c-sorted-text)' }  : {}),
-                              ...(dlState === 'error' ? { color: 'var(--c-skipped-text)' } : {}),
-                            }}
-                          >
-                            {dlState === 'loading' ? 'Downloading...'
-                             : dlState === 'done'  ? '✓ Done'
-                             : dlState === 'error' ? 'Error'
-                             : 'Download'}
-                          </button>
-                          <button onClick={() => setConfirmDelId(p.id)} className="btn-danger" style={{ padding: '4px 10px', fontSize: 12 }}>Delete</button>
-                        </span>
-                      )}
-                    </td>
-                  </tr>
+                  <div key={p.id} style={{ padding: '12px 16px', borderBottom: '0.5px solid var(--c-border-light)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--c-text-1)' }}>
+                          {MONTHS[p.month - 1]} {p.year}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {p.originalName}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--c-text-4)', marginTop: 2 }}>
+                          {new Date(p.uploadedAt).toLocaleDateString('en-GB')}
+                        </div>
+                      </div>
+                      <div>
+                        {confirming ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>Delete?</span>
+                            <button onClick={() => handleDelete(p)} className="btn-danger" style={{ padding: '4px 10px', fontSize: 12 }}>Yes</button>
+                            <button onClick={() => setConfirmDelId(null)} className="btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }}>No</button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button
+                              onClick={() => handleDownload(p)}
+                              disabled={dlState === 'loading'}
+                              className="btn-secondary"
+                              style={{
+                                padding: '4px 12px', fontSize: 12,
+                                ...(dlState === 'done'  ? { color: 'var(--c-sorted-text)' }  : {}),
+                                ...(dlState === 'error' ? { color: 'var(--c-skipped-text)' } : {}),
+                              }}
+                            >
+                              {dlState === 'loading' ? '...' : dlState === 'done' ? '✓' : dlState === 'error' ? 'Error' : 'Download'}
+                            </button>
+                            <button onClick={() => setConfirmDelId(p.id)} className="btn-danger" style={{ padding: '4px 10px', fontSize: 12 }}>Del</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 )
               })}
-            </tbody>
-          </table>
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -6,8 +6,9 @@ import { useCurrency } from '../context/CurrencyContext'
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 function getCycleBalance(cycle) {
-  const out = cycle.bills.filter(b => b.status === 'sorted').reduce((s, b) => s + (parseFloat(b.actual) || 0), 0)
-  return cycle.totalIncome - out
+  const out      = cycle.bills.filter(b => b.status === 'sorted').reduce((s, b) => s + (parseFloat(b.actual) || 0), 0)
+  const debtPaid = (cycle.debtPayments || []).reduce((s, p) => s + (parseFloat(p.amountPaid) || 0), 0)
+  return cycle.totalIncome - out - debtPaid
 }
 
 export default function AnnualWrap({ data, defaultTab = 'annual' }) {
@@ -20,7 +21,7 @@ export default function AnnualWrap({ data, defaultTab = 'annual' }) {
 
   if (cycles.length < 2) {
     return (
-      <div style={{ padding: '24px 28px' }}>
+      <div className="content-page">
         <h1 style={{ fontSize: 16, fontWeight: 500, color: 'var(--c-text-1)', margin: '0 0 20px' }}>
           {tab === 'patterns' ? 'Patterns' : 'Annual wrap'}
         </h1>
@@ -84,8 +85,8 @@ export default function AnnualWrap({ data, defaultTab = 'annual' }) {
   )
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 860 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+    <div className="content-page" style={{ maxWidth: 860 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
         <div style={{ display: 'flex', gap: 2 }}>
           {tabBtn('annual', 'Annual wrap')}
           {tabBtn('patterns', 'Patterns')}
@@ -100,7 +101,7 @@ export default function AnnualWrap({ data, defaultTab = 'annual' }) {
 
       {tab === 'annual' ? (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+          <div className="stats-grid-3" style={{ marginBottom: 16 }}>
             {[
               { label: 'Total income', value: formatCurrency(totalIn) },
               { label: 'Total spent', value: formatCurrency(totalOut) },
@@ -139,7 +140,7 @@ export default function AnnualWrap({ data, defaultTab = 'annual' }) {
           </div>
         </>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="patterns-grid">
           {[
             { label: 'Best month',       value: best  ? `${best.cycle.date} — ${formatCurrency(best.balance)}`   : '—' },
             { label: 'Worst month',      value: worst ? `${worst.cycle.date} — ${formatCurrency(worst.balance)}` : '—' },

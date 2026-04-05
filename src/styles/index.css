@@ -504,6 +504,17 @@ html.dark .tab-btn-inactive:hover {
 .bills-cards-mobile { display: none; }
 .bills-table-desktop { display: block; }
 
+/* Payslips: same desktop/mobile toggle pattern */
+.payslips-cards-mobile { display: none; }
+.payslips-table-desktop { display: table; width: 100%; border-collapse: collapse; }
+
+/* Patterns 2-col grid */
+.patterns-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 /* ─── Mobile breakpoint ──────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   /* Show mobile header */
@@ -630,5 +641,14 @@ html.dark .tab-btn-inactive:hover {
   .add-debt-balance {
     flex: 1 1 0 !important;
     min-width: 0 !important;
+  }
+
+  /* Payslips: show cards, hide table */
+  .payslips-table-desktop { display: none !important; }
+  .payslips-cards-mobile  { display: block !important; }
+
+  /* Patterns: single column on mobile */
+  .patterns-grid {
+    grid-template-columns: 1fr !important;
   }
 }

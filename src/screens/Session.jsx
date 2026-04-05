@@ -28,8 +28,11 @@ export default function Session({ data, persist }) {
   const [showAddBill, setShowAddBill] = useState(false)
   const [payingDebt, setPayingDebt] = useState(null)
   const [payAmount, setPayAmount] = useState('')
-  const [editingDebt, setEditingDebt] = useState(null)
-  const [editAmount, setEditAmount] = useState('')
+  const [editingDebt,   setEditingDebt]   = useState(null)
+  const [editAmount,    setEditAmount]    = useState('')
+  const [editingIncome, setEditingIncome] = useState(false)
+  const [incomePaycheck, setIncomePaycheck] = useState('')
+  const [incomeOther,    setIncomeOther]    = useState('')
 
   const session = data.activeSession
   const template = data.template
@@ -129,6 +132,19 @@ export default function Session({ data, persist }) {
     setNewBill(prev => ({ ...prev, name, category: name.length > 2 ? guessCategory(name) : prev.category }))
   }
 
+  function openEditIncome() {
+    setIncomePaycheck(String(session.paycheck || ''))
+    setIncomeOther(String(session.otherIncome || ''))
+    setEditingIncome(true)
+  }
+
+  function saveIncome() {
+    const paycheck    = parseFloat(incomePaycheck) || 0
+    const otherIncome = parseFloat(incomeOther) || 0
+    persist({ ...data, activeSession: { ...session, paycheck, otherIncome, totalIncome: paycheck + otherIncome } })
+    setEditingIncome(false)
+  }
+
   function closeSession(debtSnapshots) {
     persist({
       ...data,
@@ -168,10 +184,49 @@ export default function Session({ data, persist }) {
       {showStart && <StartSessionModal onConfirm={startSession} onClose={() => setShowStart(false)} />}
       {showClose && <CloseSessionModal session={session} template={template} onConfirm={closeSession} onClose={() => setShowClose(false)} />}
 
+      {/* Edit income modal */}
+      {editingIncome && (
+        <div className="modal-overlay">
+          <div className="modal-panel" style={{ width: 340 }}>
+            <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--c-text-1)', marginBottom: 18 }}>Edit income</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+              <div>
+                <label style={{ fontSize: 11, color: 'var(--c-text-4)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: 4 }}>Paycheck</label>
+                <input
+                  autoFocus type="text" inputMode="decimal" value={incomePaycheck}
+                  onChange={e => /^\d*\.?\d*$/.test(e.target.value) || e.target.value === '' ? setIncomePaycheck(e.target.value) : null}
+                  style={{ width: '100%', padding: '8px 10px', border: '0.5px solid var(--c-input-border)', borderRadius: 6, fontSize: 14, background: 'var(--c-input-bg)', color: 'var(--c-text-1)', outline: 'none' }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: 'var(--c-text-4)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: 4 }}>Other income</label>
+                <input
+                  type="text" inputMode="decimal" value={incomeOther}
+                  onChange={e => /^\d*\.?\d*$/.test(e.target.value) || e.target.value === '' ? setIncomeOther(e.target.value) : null}
+                  style={{ width: '100%', padding: '8px 10px', border: '0.5px solid var(--c-input-border)', borderRadius: 6, fontSize: 14, background: 'var(--c-input-bg)', color: 'var(--c-text-1)', outline: 'none' }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setEditingIncome(false)} className="btn-secondary" style={{ padding: '7px 14px', fontSize: 13 }}>Cancel</button>
+              <button onClick={saveIncome} className="btn-primary" style={{ padding: '7px 18px', fontSize: 13 }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, gap: 10 }}>
         <div>
           <h1 style={{ fontSize: 16, fontWeight: 500, color: 'var(--c-text-1)', margin: '0 0 2px' }}>Payday session</h1>
-          <span style={{ fontSize: 12, color: 'var(--c-text-4)' }}>{session.date}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 12, color: 'var(--c-text-4)' }}>{session.date}</span>
+            <button
+              onClick={openEditIncome}
+              style={{ fontSize: 11, color: 'var(--c-text-4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+            >
+              edit income
+            </button>
+          </div>
         </div>
         <button onClick={() => setShowClose(true)} className="btn-secondary" style={{ padding: '8px 18px', fontSize: 13, flexShrink: 0 }}>
           Close cycle

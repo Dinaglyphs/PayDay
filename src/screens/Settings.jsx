@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { useCurrency } from '../context/CurrencyContext'
+import { deleteAccount } from '../store/dataStore'
 
 const CATEGORIES = ['Housing', 'Utilities', 'Debt repayment', 'Transport', 'Food & living', 'Savings', 'Personal', 'Other']
 const DEBT_TYPES = ['Credit card', 'Loan', 'Personal']
@@ -10,6 +11,8 @@ export default function Settings({ data, persist, toggleTheme }) {
   const template = data.template
   const [tab, setTab] = useState('bills')
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [deleteAccountStep, setDeleteAccountStep] = useState(0) // 0=idle, 1=confirm, 2=deleting
+  const [deleteAccountError, setDeleteAccountError] = useState(null)
   const [newBill, setNewBill] = useState({ name: '', budgeted: '', category: 'Housing' })
   const [newDebt, setNewDebt] = useState({ name: '', type: 'Credit card', startingBalance: '' })
 
@@ -190,6 +193,65 @@ export default function Settings({ data, persist, toggleTheme }) {
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => { if (isDark) toggleTheme() }} style={pillStyle(!isDark)}>Light</button>
               <button onClick={() => { if (!isDark) toggleTheme() }} style={pillStyle(isDark)}>Dark</button>
+            </div>
+          </div>
+
+          {/* Danger zone */}
+          <div>
+            <div style={{ fontSize: 12, color: 'var(--c-text-4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Danger zone</div>
+            <div style={{
+              padding: '16px 18px', borderRadius: 10,
+              border: '1px solid rgba(226,75,74,0.3)',
+              background: 'rgba(226,75,74,0.04)',
+            }}>
+              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--c-text-1)', marginBottom: 4 }}>Delete account</div>
+              <p style={{ fontSize: 12, color: 'var(--c-text-3)', margin: '0 0 14px', lineHeight: 1.6 }}>
+                Permanently deletes your account and all associated data — bills, cycles, debts, and payslips. This cannot be undone.
+              </p>
+              {deleteAccountError && (
+                <div style={{ fontSize: 12, color: 'var(--c-skipped-text)', marginBottom: 10 }}>{deleteAccountError}</div>
+              )}
+              {deleteAccountStep === 0 && (
+                <button
+                  onClick={() => setDeleteAccountStep(1)}
+                  className="btn-danger"
+                  style={{ padding: '7px 16px', fontSize: 13 }}
+                >
+                  Delete my account
+                </button>
+              )}
+              {deleteAccountStep === 1 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 13, color: 'var(--c-text-2)' }}>Are you absolutely sure?</span>
+                  <button
+                    onClick={async () => {
+                      setDeleteAccountStep(2)
+                      setDeleteAccountError(null)
+                      try {
+                        await deleteAccount()
+                        // Auth listener will clear the app on sign-out
+                      } catch (err) {
+                        setDeleteAccountError(err.message || 'Something went wrong.')
+                        setDeleteAccountStep(0)
+                      }
+                    }}
+                    className="btn-danger"
+                    style={{ padding: '7px 16px', fontSize: 13, fontWeight: 500 }}
+                  >
+                    Yes, delete everything
+                  </button>
+                  <button
+                    onClick={() => setDeleteAccountStep(0)}
+                    className="btn-secondary"
+                    style={{ padding: '7px 14px', fontSize: 13 }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+              {deleteAccountStep === 2 && (
+                <span style={{ fontSize: 13, color: 'var(--c-text-3)' }}>Deleting…</span>
+              )}
             </div>
           </div>
 

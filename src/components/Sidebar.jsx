@@ -17,7 +17,7 @@ function getCycleEndBalance(cycle) {
 export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCycle, deleteCycle, isDark, toggleTheme, onSignOut, sidebarOpen }) {
   const { formatAmount: formatCurrency } = useCurrency()
   const cycles = data.cycles || []
-  const recentCycles = [...cycles].reverse().slice(0, 10)
+  const recentCycles = [...cycles].reverse()
   const hasActiveSession = !!data.activeSession
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
 

@@ -21,30 +21,73 @@ function buildCycleObject(row, allBills, allPayments, allSnapshots) {
   }
 }
 
+async function upsertCycle(uid, cycle, isActive) {
+  await supabase.from('cycles').upsert({
+    id: cycle.id, user_id: uid, date: cycle.date,
+    paycheck: cycle.paycheck ?? 0, other_income: cycle.otherIncome ?? 0,
+    total_income: cycle.totalIncome ?? 0, is_active: isActive ? 1 : 0,
+    status: cycle.status ?? (isActive ? 'open' : 'closed'),
+    closed_at: cycle.closedAt ?? null,
+  }, { onConflict: 'id' })
+
+  if (cycle.bills?.length > 0) {
+    await supabase.from('cycle_bills').upsert(
+      cycle.bills.map((b, i) => ({
+        id: b.id, cycle_id: cycle.id, user_id: uid,
+        name: b.name, category: b.category ?? '',
+        budgeted: b.budgeted ?? 0, actual: b.actual ?? 0,
+        status: b.status ?? 'untouched', sort_order: i,
+      })),
+      { onConflict: 'id' }
+    )
+  }
+
+  await supabase.from('cycle_debt_payments').delete().eq('cycle_id', cycle.id)
+  if (cycle.debtPayments?.length > 0) {
+    await supabase.from('cycle_debt_payments').insert(
+      cycle.debtPayments.map((p, i) => ({
+        id: `${cycle.id}-dp-${i}`, cycle_id: cycle.id, user_id: uid,
+        debt_id: p.debtId ?? '', debt_name: p.debtName ?? '', amount_paid: p.amountPaid ?? 0,
+      }))
+    )
+  }
+
+  await supabase.from('cycle_debt_snapshots').delete().eq('cycle_id', cycle.id)
+  if (cycle.debtSnapshots?.length > 0) {
+    await supabase.from('cycle_debt_snapshots').insert(
+      cycle.debtSnapshots.map((s, i) => ({
+        id: `${cycle.id}-ds-${i}`, cycle_id: cycle.id, user_id: uid,
+        debt_id: s.id ?? '', name: s.name ?? '', balance: s.balance ?? 0,
+      }))
+    )
+  }
+}
+
 // ── Load ──────────────────────────────────────────────────────────────────────
 
 export async function loadData() {
   const uid = await getUid()
   if (!uid) return null
 
-  // Preferences
   const { data: prefRows } = await supabase.from('preferences').select('key, value').eq('user_id', uid)
   const preferences = {}
   for (const row of (prefRows || [])) {
     try { preferences[row.key] = JSON.parse(row.value) } catch { preferences[row.key] = row.value }
   }
 
-  // Template
   const [{ data: tBills }, { data: tDebts }] = await Promise.all([
     supabase.from('template_bills').select('*').eq('user_id', uid).order('sort_order'),
     supabase.from('template_debts').select('*').eq('user_id', uid),
   ])
   const template = (tBills?.length > 0 || tDebts?.length > 0) ? {
     bills: (tBills || []).map(b => ({ id: b.id, name: b.name, budgeted: b.budgeted, category: b.category })),
-    debts: (tDebts || []).map(d => ({ id: d.id, name: d.name, type: d.type, startingBalance: d.starting_balance })),
+    debts: (tDebts || []).map(d => ({
+      id: d.id, name: d.name, type: d.type,
+      startingBalance: d.starting_balance,
+      originalBalance: d.original_balance ?? d.starting_balance,
+    })),
   } : null
 
-  // Cycles
   const [{ data: closedRows }, { data: activeRows }] = await Promise.all([
     supabase.from('cycles').select('*').eq('user_id', uid).eq('is_active', 0).order('created_at', { ascending: false }),
     supabase.from('cycles').select('*').eq('user_id', uid).eq('is_active', 1).limit(1),
@@ -64,10 +107,9 @@ export async function loadData() {
     allSnapshots = sRes.data || []
   }
 
-  const cycles       = (closedRows || []).map(r => buildCycleObject(r, allBills, allPayments, allSnapshots))
+  const cycles        = (closedRows || []).map(r => buildCycleObject(r, allBills, allPayments, allSnapshots))
   const activeSession = activeRow ? buildCycleObject(activeRow, allBills, allPayments, allSnapshots) : null
 
-  // Payslips
   const { data: payslipRows } = await supabase
     .from('payslips').select('*').eq('user_id', uid)
     .order('year', { ascending: false }).order('month', { ascending: false })
@@ -79,112 +121,93 @@ export async function loadData() {
   return { preferences, template, cycles, activeSession, payslips }
 }
 
-// ── Save ──────────────────────────────────────────────────────────────────────
+// ── Targeted save functions ───────────────────────────────────────────────────
+
+export async function savePreferences(preferences) {
+  const uid = await getUid()
+  if (!uid || !preferences) return
+  const rows = Object.entries(preferences).map(([key, value]) => ({
+    user_id: uid, key, value: JSON.stringify(value),
+  }))
+  await supabase.from('preferences').upsert(rows, { onConflict: 'user_id,key' })
+}
+
+export async function saveTemplate(template) {
+  const uid = await getUid()
+  if (!uid || !template) return
+  await supabase.from('template_bills').delete().eq('user_id', uid)
+  if (template.bills?.length > 0) {
+    await supabase.from('template_bills').insert(
+      template.bills.map((b, i) => ({
+        id: b.id, user_id: uid, name: b.name,
+        budgeted: b.budgeted ?? 0, category: b.category ?? '', sort_order: i,
+      }))
+    )
+  }
+  await supabase.from('template_debts').delete().eq('user_id', uid)
+  if (template.debts?.length > 0) {
+    await supabase.from('template_debts').insert(
+      template.debts.map(d => ({
+        id: d.id, user_id: uid, name: d.name,
+        type: d.type ?? '', starting_balance: d.startingBalance ?? 0,
+        original_balance: d.originalBalance ?? d.startingBalance ?? 0,
+      }))
+    )
+  }
+}
+
+export async function saveActiveSession(session) {
+  const uid = await getUid()
+  if (!uid) return
+  if (!session) {
+    await supabase.from('cycles').update({ is_active: 0 }).eq('user_id', uid).eq('is_active', 1)
+    return
+  }
+  await upsertCycle(uid, session, true)
+}
+
+export async function saveClosedCycle(cycle) {
+  const uid = await getUid()
+  if (!uid) return
+  await upsertCycle(uid, cycle, false)
+}
+
+export async function deleteClosedCycle(cycleId) {
+  const uid = await getUid()
+  if (!uid) return
+  await supabase.from('cycle_bills').delete().eq('cycle_id', cycleId)
+  await supabase.from('cycle_debt_payments').delete().eq('cycle_id', cycleId)
+  await supabase.from('cycle_debt_snapshots').delete().eq('cycle_id', cycleId)
+  await supabase.from('cycles').delete().eq('id', cycleId).eq('user_id', uid)
+}
+
+export async function deleteAccount() {
+  const { error } = await supabase.rpc('delete_account')
+  if (error) throw error
+  await supabase.auth.signOut()
+}
+
+// ── Legacy full save (used during onboarding setup) ───────────────────────────
 
 export async function saveData(data) {
   const uid = await getUid()
   if (!uid) return
-
-  const ops = []
-
-  // Preferences
-  if (data.preferences) {
-    const rows = Object.entries(data.preferences).map(([key, value]) => ({
-      user_id: uid, key, value: JSON.stringify(value),
-    }))
-    ops.push(supabase.from('preferences').upsert(rows, { onConflict: 'user_id,key' }))
-  }
-
-  // Template — delete + reinsert (small tables, simplest approach)
-  if (data.template) {
-    ops.push(
-      supabase.from('template_bills').delete().eq('user_id', uid).then(() => {
-        if (!data.template.bills?.length) return
-        return supabase.from('template_bills').insert(
-          data.template.bills.map((b, i) => ({
-            id: b.id, user_id: uid, name: b.name,
-            budgeted: b.budgeted ?? 0, category: b.category ?? '', sort_order: i,
-          }))
-        )
-      })
-    )
-    ops.push(
-      supabase.from('template_debts').delete().eq('user_id', uid).then(() => {
-        if (!data.template.debts?.length) return
-        return supabase.from('template_debts').insert(
-          data.template.debts.map(d => ({
-            id: d.id, user_id: uid, name: d.name,
-            type: d.type ?? '', starting_balance: d.startingBalance ?? 0,
-          }))
-        )
-      })
-    )
-  }
-
-  await Promise.all(ops)
-
-  // Cycles — reset is_active, then upsert each cycle and its children
+  await savePreferences(data.preferences)
+  await saveTemplate(data.template)
   await supabase.from('cycles').update({ is_active: 0 }).eq('user_id', uid)
-
   const allCycles = [
-    ...(data.cycles || []).map(c => ({ ...c, _active: 0 })),
-    ...(data.activeSession ? [{ ...data.activeSession, _active: 1 }] : []),
+    ...(data.cycles || []).map(c => ({ ...c, _active: false })),
+    ...(data.activeSession ? [{ ...data.activeSession, _active: true }] : []),
   ]
-
   for (const cycle of allCycles) {
-    await supabase.from('cycles').upsert({
-      id: cycle.id, user_id: uid, date: cycle.date,
-      paycheck: cycle.paycheck ?? 0, other_income: cycle.otherIncome ?? 0,
-      total_income: cycle.totalIncome ?? 0, is_active: cycle._active,
-      status: cycle.status ?? (cycle._active ? 'open' : 'closed'),
-      closed_at: cycle.closedAt ?? null,
-    }, { onConflict: 'id' })
-
-    // Bills — upsert each
-    if (cycle.bills?.length > 0) {
-      await supabase.from('cycle_bills').upsert(
-        cycle.bills.map((b, i) => ({
-          id: b.id, cycle_id: cycle.id, user_id: uid,
-          name: b.name, category: b.category ?? '',
-          budgeted: b.budgeted ?? 0, actual: b.actual ?? 0,
-          status: b.status ?? 'untouched', sort_order: i,
-        })),
-        { onConflict: 'id' }
-      )
-    }
-
-    // Debt payments — delete + reinsert
-    await supabase.from('cycle_debt_payments').delete().eq('cycle_id', cycle.id)
-    if (cycle.debtPayments?.length > 0) {
-      await supabase.from('cycle_debt_payments').insert(
-        cycle.debtPayments.map((p, i) => ({
-          id: `${cycle.id}-dp-${i}`, cycle_id: cycle.id, user_id: uid,
-          debt_id: p.debtId ?? '', debt_name: p.debtName ?? '', amount_paid: p.amountPaid ?? 0,
-        }))
-      )
-    }
-
-    // Debt snapshots — delete + reinsert
-    await supabase.from('cycle_debt_snapshots').delete().eq('cycle_id', cycle.id)
-    if (cycle.debtSnapshots?.length > 0) {
-      await supabase.from('cycle_debt_snapshots').insert(
-        cycle.debtSnapshots.map((s, i) => ({
-          id: `${cycle.id}-ds-${i}`, cycle_id: cycle.id, user_id: uid,
-          debt_id: s.id ?? '', name: s.name ?? '', balance: s.balance ?? 0,
-        }))
-      )
-    }
+    await upsertCycle(uid, cycle, cycle._active)
   }
-
-  // Payslips — sync metadata (insert new, delete removed)
   if (data.payslips) {
     const { data: existing } = await supabase.from('payslips').select('id').eq('user_id', uid)
     const existingIds = new Set((existing || []).map(r => r.id))
     const currentIds  = new Set(data.payslips.map(p => p.id))
-
     const toInsert = data.payslips.filter(p => !existingIds.has(p.id))
     const toDelete = [...existingIds].filter(id => !currentIds.has(id))
-
     if (toInsert.length > 0) {
       await supabase.from('payslips').insert(
         toInsert.map(p => ({
