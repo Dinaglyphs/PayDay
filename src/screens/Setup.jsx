@@ -84,11 +84,17 @@ export default function Setup({ onComplete }) {
       <div style={{ width: '100%', maxWidth: 680, padding: '0 20px' }}>
 
         {/* Header */}
-        <div style={{ marginBottom: 28 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--c-text-1)', margin: '0 0 6px' }}>
-            Set up your template
-            <span style={{ fontSize: 12, fontStyle: 'italic', color: '#CC3399', fontWeight: 400, marginLeft: 8, verticalAlign: 'super' }}>by Dinaglyphs</span>
+        <div style={{ marginBottom: 28, textAlign: 'center' }}>
+          <img
+            src="/icon-source.png"
+            alt="PayDay"
+            style={{ width: 64, height: 64, borderRadius: 16, objectFit: 'contain', display: 'block', margin: '0 auto 16px', boxShadow: '0 8px 32px rgba(153,0,153,0.3)' }}
+            onError={e => { e.currentTarget.style.display = 'none' }}
+          />
+          <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--c-text-1)', margin: '0 0 4px' }}>
+            Set up PayDay
           </h1>
+          <div style={{ fontSize: 13, fontStyle: 'italic', color: '#CC3399', marginBottom: 10 }}>by Dinaglyphs</div>
           <p style={{ fontSize: 13, color: 'var(--c-text-3)', margin: 0, lineHeight: 1.6 }}>
             Add the bills you pay each month and enter the usual amount for each. You can edit these any time in Settings.
           </p>

@@ -515,6 +515,10 @@ html.dark .tab-btn-inactive:hover {
   gap: 12px;
 }
 
+/* ─── Setup screen — desktop column sizing ───────────────────────────────── */
+.setup-row-name { flex: 1 1 0; min-width: 0; }
+.setup-row-cat  { flex: 0 0 150px; min-width: 0; }
+
 /* ─── Mobile breakpoint ──────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   /* Show mobile header */
@@ -534,9 +538,10 @@ html.dark .tab-btn-inactive:hover {
     top: 0;
     z-index: 1000;
     transition: left 0.22s ease !important;
-    height: 100dvh !important;   /* dvh accounts for iOS browser chrome */
-    height: 100vh !important;    /* fallback for older browsers */
-    overflow-y: auto !important; /* whole sidebar scrolls on mobile */
+    height: 100vh !important;          /* fallback */
+    height: 100dvh !important;         /* modern: excludes iOS browser chrome — must come AFTER 100vh */
+    height: -webkit-fill-available !important; /* older iOS Safari fallback */
+    overflow-y: auto !important;
     box-shadow: none;
   }
   .sidebar.sidebar-open {

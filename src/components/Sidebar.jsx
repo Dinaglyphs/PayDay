@@ -52,7 +52,7 @@ export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCyc
         width: 200, minWidth: 200, height: '100vh',
         background: 'var(--c-bg-sidebar)',
         borderRight: '0.5px solid var(--c-border)',
-        display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'hidden',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}
     >
       {/* App name */}
@@ -162,32 +162,28 @@ export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCyc
         )}
       </div>
 
-      {/* Insights */}
-      <div style={{ padding: '10px 8px 0', borderTop: '0.5px solid var(--c-border)' }}>
+      {/* Insights + About — compact single block */}
+      <div style={{ padding: '6px 8px 2px', borderTop: '0.5px solid var(--c-border)' }}>
         <div style={{
-          fontSize: 11, fontWeight: 500,
+          fontSize: 10, fontWeight: 500,
           color: isDark ? 'rgba(204,51,153,0.65)' : 'var(--c-text-4)',
-          padding: '0 6px', marginBottom: 4,
+          padding: '0 6px', marginBottom: 2,
           textTransform: 'uppercase', letterSpacing: '0.5px'
         }}>
           Insights
         </div>
         {navItem('annual', 'Annual wrap', null)}
         {navItem('patterns', 'Patterns', null)}
-      </div>
-
-      {/* About */}
-      <div style={{ padding: '0 8px 6px', borderTop: '0.5px solid var(--c-border)' }}>
         {navItem('about', 'About PayDay', null)}
       </div>
 
       {/* Footer: Settings + Theme toggle */}
-      <div style={{ padding: '8px 8px 0', borderTop: '0.5px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 4 }}>
+      <div style={{ padding: '4px 8px 0', borderTop: '0.5px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 4 }}>
         <button
           onClick={() => setCurrentScreen('settings')}
           style={{
             display: 'flex', alignItems: 'center', gap: 6, flex: 1,
-            padding: '7px 12px', borderRadius: 6, border: 'none',
+            padding: '5px 10px', borderRadius: 6, border: 'none',
             background: currentScreen === 'settings'
               ? (isDark ? 'rgba(204,51,153,0.12)' : 'var(--c-border-light)')
               : 'transparent',
@@ -204,7 +200,7 @@ export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCyc
           onClick={toggleTheme}
           title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           style={{
-            padding: '7px 8px', borderRadius: 6, border: 'none',
+            padding: '5px 8px', borderRadius: 6, border: 'none',
             background: 'transparent', color: 'var(--c-text-3)', cursor: 'pointer',
             display: 'flex', alignItems: 'center'
           }}
@@ -225,16 +221,15 @@ export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCyc
         </button>
       </div>
 
-      {/* Sign out + Attribution */}
-      <div style={{ padding: '8px 8px 0', borderTop: '0.5px solid var(--c-border)' }}>
-        {onSignOut && (
+      {/* Sign out */}
+      {onSignOut && (
+        <div style={{ padding: '2px 8px 4px', borderTop: '0.5px solid var(--c-border)' }}>
           <button
             onClick={onSignOut}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 6,
-              padding: '7px 12px', borderRadius: 6, border: 'none',
+              padding: '5px 10px', borderRadius: 6, border: 'none',
               background: 'transparent', color: 'var(--c-text-4)', fontSize: 13, cursor: 'pointer',
-              textAlign: 'left',
             }}
             onMouseEnter={e => e.currentTarget.style.color = isDark ? '#F06B6A' : '#dc2626'}
             onMouseLeave={e => e.currentTarget.style.color = 'var(--c-text-4)'}
@@ -244,22 +239,19 @@ export default function Sidebar({ data, currentScreen, setCurrentScreen, viewCyc
             </svg>
             Sign out
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
+      {/* Credits */}
       <div style={{
-        padding: '6px 16px 10px',
+        padding: '4px 14px 8px',
         borderTop: '1px solid rgba(204, 51, 153, 0.12)',
-        fontSize: '10px',
-        color: 'rgba(230, 230, 230, 0.25)',
-        lineHeight: 1.4,
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
+        fontSize: '10px', color: 'rgba(153,153,153,0.4)', lineHeight: 1.4,
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
       }}>
         Vibecoded by{' '}
-        <span style={{ color: 'rgba(204, 51, 153, 0.45)', fontStyle: 'italic' }}>Opeyemi Daniel Abatan</span>
-        {' '}
+        <span style={{ color: 'rgba(204, 51, 153, 0.4)', fontStyle: 'italic' }}>Opeyemi Daniel Abatan</span>
+        {' · '}
         <span style={{ color: 'rgba(204, 51, 153, 0.3)' }}>@dinaglyphs</span>
       </div>
     </div>
